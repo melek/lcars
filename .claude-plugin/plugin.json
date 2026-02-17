@@ -1,0 +1,10 @@
+{
+  "name": "lcars",
+  "version": "0.1.0",
+  "description": "Self-correcting cognitive ergonomics for Claude Code",
+  "author": {
+    "name": "Lionel Di Giacomo"
+  },
+  "repository": "https://github.com/melek/lcars",
+  "license": "MIT"
+}
