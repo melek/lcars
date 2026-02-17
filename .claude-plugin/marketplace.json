@@ -1,0 +1,15 @@
+{
+  "name": "melek-lcars",
+  "description": "LCARS cognitive ergonomics plugin for Claude Code",
+  "owner": {
+    "name": "Lionel Di Giacomo"
+  },
+  "plugins": [
+    {
+      "name": "lcars",
+      "source": ".",
+      "description": "Self-correcting cognitive ergonomics for Claude Code",
+      "version": "0.1.0"
+    }
+  ]
+}
