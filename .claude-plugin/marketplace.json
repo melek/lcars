@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "lcars",
-      "source": ".",
+      "source": "./",
       "description": "Self-correcting cognitive ergonomics for Claude Code",
       "version": "0.1.0"
     }
