@@ -151,6 +151,7 @@ def hook_main():
     from store import append_score, write_drift_flag, rotate_store
     from drift import detect as detect_drift
     from classify import read_classification
+    from fitness import evaluate_correction
 
     hook_input = json.load(sys.stdin)
 
@@ -172,6 +173,9 @@ def hook_main():
     query_type = read_classification()
     store_score["query_type"] = query_type
     append_score(store_score)
+
+    # Evaluate pending correction (if any) before new drift detection
+    evaluate_correction(store_score)
 
     # Query-type-aware drift detection
     drift_result = detect_drift(score, query_type)

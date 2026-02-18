@@ -101,6 +101,32 @@ Typical cost: **~50 tokens/session**.
 4. **Calm by default** — the plugin's own operations are minimal and non-intrusive
 5. **Recursive ergonomics** — the plugin applies its own cognitive load standards to itself
 
+## Foundry
+
+LCARS includes a self-contained strategy crystallization system inspired by [OpenClaw](https://github.com/openclaw)'s Foundry pattern. Instead of creating external tools, it crystallizes observations into its own correction strategies.
+
+The flow: **observe → validate → crystallize → stage → approve**.
+
+1. Scoring and drift data accumulate over sessions
+2. The PreCompact hook consolidates session summaries and identifies recurring patterns
+3. Overfit gates prevent premature crystallization: a pattern must appear in **5+ sessions** across **3+ calendar days**
+4. The Foundry analyzes validated patterns against correction effectiveness and proposes new or refined strategies
+5. Proposals are staged — never auto-applied. Run `/lcars:foundry` to review and approve.
+
+Three proposal types:
+- **Gap**: a validated drift pattern has no query-type-specific strategy (e.g., filler drift on emotional queries keeps firing but the generic correction doesn't help)
+- **Refinement**: an existing strategy has low fitness (< 50% effective) for a specific query type
+- **Suppression**: a strategy fires in > 30% of sessions but rarely improves the targeted dimension
+
+## Skills
+
+| Skill | Purpose |
+|---|---|
+| `/lcars:dashboard` | Scoring stats, drift history, correction fitness, active patterns |
+| `/lcars:calibrate` | Propose threshold adjustments from evidence (human-approved) |
+| `/lcars:consolidate` | Manually trigger pattern consolidation |
+| `/lcars:foundry` | Review and apply staged strategy proposals |
+
 ## Architecture
 
 ```
@@ -110,6 +136,9 @@ lib/
 ├── inject.py       # Context assembly (anchor + correction + stats)
 ├── drift.py        # Drift detection, severity, correction strategy selection
 ├── classify.py     # Deterministic query-type classifier (no LLM calls)
+├── fitness.py      # Correction effectiveness tracking
+├── consolidate.py  # Session summary extraction + pattern consolidation
+├── foundry.py      # Strategy crystallization from validated patterns
 ├── observe.py      # PostToolUse logger (silent, async)
 ├── thresholds.py   # Query-type-aware threshold management
 ├── transcript.py   # Transcript parsing utilities
@@ -117,6 +146,20 @@ lib/
 ```
 
 Runtime data: `~/.claude/lcars/`
+
+```
+~/.claude/lcars/
+├── scores.jsonl                    # Score ledger (weekly rotation)
+├── drift.json                      # Ephemeral drift flag (consumed on read)
+├── thresholds.json                 # Active thresholds
+├── query-type.tmp                  # Current query classification
+├── pending-correction.json         # Correction awaiting effectiveness evaluation
+└── memory/
+    ├── session-summaries.jsonl     # Per-session summaries (30-day window)
+    ├── patterns.json               # Consolidated recurring patterns
+    ├── correction-outcomes.jsonl   # Correction → result pairs for fitness
+    └── staged-strategies.json      # Foundry proposals awaiting approval
+```
 
 ## Standalone scoring
 

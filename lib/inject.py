@@ -20,6 +20,7 @@ DATA_DIR = PLUGIN_ROOT / "data"
 
 sys.path.insert(0, str(Path(__file__).parent))
 from store import read_and_clear_drift_flag, last_score_age_hours, rolling_stats
+from fitness import record_correction
 
 
 def load_anchor() -> str:
@@ -38,6 +39,8 @@ def load_correction() -> str:
 
     # drift.py already selected the correction template and formatted it
     correction = drift.get("correction", "")
+    if correction:
+        record_correction(drift)
     return correction
 
 

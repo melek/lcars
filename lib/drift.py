@@ -86,6 +86,9 @@ def detect(score: dict, query_type: str = "ambiguous") -> dict | None:
         "reasons": reasons,
         "correction": correction,
         "query_type": query_type,
+        "padding_count": score.get("padding_count", 0),
+        "answer_position": score.get("answer_position", 0),
+        "info_density": score.get("info_density", 0),
     }
 
 
