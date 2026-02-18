@@ -1,5 +1,5 @@
 {
-  "description": "LCARS cognitive ergonomics: score responses, detect drift, inject corrections",
+  "description": "LCARS dual-ergonomics: observe, score, detect drift, inject corrections",
   "hooks": {
     "SessionStart": [
       {
@@ -12,12 +12,36 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/lib/classify.py --hook",
+            "timeout": 3,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/lib/observe.py",
+            "timeout": 3,
+            "async": true
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/lib/scorer.py --hook",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/lib/score.py --hook",
             "timeout": 10,
             "async": true
           }

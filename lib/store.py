@@ -1,97 +1,67 @@
-"""JSONL score storage with drift detection.
+"""JSONL score ledger with drift flag management.
 
 Scores append to ~/.claude/lcars/scores.jsonl.
 Drift flags written to ~/.claude/lcars/drift.json.
 Weekly rotation keeps last 4 weeks.
+
+Drift *detection* logic lives in drift.py. This module handles storage only.
 """
 
-import fcntl
 import json
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
-LCARS_DIR = Path.home() / ".claude" / "lcars"
-SCORES_FILE = LCARS_DIR / "scores.jsonl"
-DRIFT_FILE = LCARS_DIR / "drift.json"
+from compat import file_lock, file_unlock, lcars_dir
 
-# Drift thresholds
-FILLER_THRESHOLD = 0  # any filler = drift
-PREAMBLE_THRESHOLD = 0  # any preamble words = drift
-DENSITY_THRESHOLD = 0.60  # below this = drift
-
-
-def _ensure_dir():
-    LCARS_DIR.mkdir(parents=True, exist_ok=True)
+SCORES_FILE = os.path.join(lcars_dir(), "scores.jsonl")
+DRIFT_FILE = os.path.join(lcars_dir(), "drift.json")
 
 
 def append_score(score: dict):
-    """Append a scored response to the JSONL store."""
-    _ensure_dir()
+    """Append a scored response to the JSONL ledger."""
     entry = {
         "ts": datetime.now().isoformat(),
         "epoch": time.time(),
         **score,
     }
     with open(SCORES_FILE, "a") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
+        file_lock(f)
         f.write(json.dumps(entry) + "\n")
-        fcntl.flock(f, fcntl.LOCK_UN)
-
-
-def detect_drift(score: dict) -> dict | None:
-    """Check score against thresholds. Returns drift details or None."""
-    reasons = []
-
-    if score.get("padding_count", 0) > FILLER_THRESHOLD:
-        reasons.append(f"filler:{score['padding_count']}")
-
-    if score.get("answer_position", 0) > PREAMBLE_THRESHOLD:
-        reasons.append(f"preamble:{score['answer_position']}w")
-
-    density = score.get("info_density", 1.0)
-    if density < DENSITY_THRESHOLD:
-        reasons.append(f"density:{density:.3f}")
-
-    if not reasons:
-        return None
-
-    return {
-        "ts": datetime.now().isoformat(),
-        "reasons": reasons,
-        "score": score,
-    }
+        file_unlock(f)
 
 
 def write_drift_flag(details: dict):
     """Write drift flag for SessionStart hook to pick up."""
-    _ensure_dir()
     with open(DRIFT_FILE, "w") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
+        file_lock(f)
         json.dump(details, f)
-        fcntl.flock(f, fcntl.LOCK_UN)
+        file_unlock(f)
 
 
 def read_and_clear_drift_flag() -> dict | None:
     """Read drift flag and delete it. Returns details or None."""
-    if not DRIFT_FILE.exists():
+    if not os.path.exists(DRIFT_FILE):
         return None
     try:
         with open(DRIFT_FILE) as f:
-            fcntl.flock(f, fcntl.LOCK_SH)
+            file_lock(f, exclusive=False)
             data = json.load(f)
-            fcntl.flock(f, fcntl.LOCK_UN)
-        DRIFT_FILE.unlink()
+            file_unlock(f)
+        os.unlink(DRIFT_FILE)
         return data
     except (json.JSONDecodeError, OSError):
-        DRIFT_FILE.unlink(missing_ok=True)
+        try:
+            os.unlink(DRIFT_FILE)
+        except OSError:
+            pass
         return None
 
 
 def last_score_age_hours() -> float | None:
     """Hours since last score entry. None if no scores exist."""
-    if not SCORES_FILE.exists():
+    if not os.path.exists(SCORES_FILE):
         return None
     try:
         with open(SCORES_FILE, "rb") as f:
@@ -108,8 +78,8 @@ def last_score_age_hours() -> float | None:
 
 
 def rolling_stats(days: int = 7) -> dict | None:
-    """Compute rolling stats over recent scores. Returns summary or None."""
-    if not SCORES_FILE.exists():
+    """Compute rolling stats over recent scores."""
+    if not os.path.exists(SCORES_FILE):
         return None
 
     cutoff = time.time() - (days * 86400)
@@ -131,7 +101,10 @@ def rolling_stats(days: int = 7) -> dict | None:
         return None
 
     n = len(scores)
-    drift_count = sum(1 for s in scores if s.get("padding_count", 0) > 0 or s.get("answer_position", 0) > 0)
+    drift_count = sum(
+        1 for s in scores
+        if s.get("padding_count", 0) > 0 or s.get("answer_position", 0) > 0
+    )
     avg_density = sum(s.get("info_density", 0) for s in scores) / n
     avg_words = sum(s.get("word_count", 0) for s in scores) / n
 
@@ -145,7 +118,7 @@ def rolling_stats(days: int = 7) -> dict | None:
 
 def rotate_store(keep_weeks: int = 4):
     """Remove scores older than keep_weeks."""
-    if not SCORES_FILE.exists():
+    if not os.path.exists(SCORES_FILE):
         return
 
     cutoff = time.time() - (keep_weeks * 7 * 86400)
@@ -164,6 +137,6 @@ def rotate_store(keep_weeks: int = 4):
         return
 
     with open(SCORES_FILE, "w") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
+        file_lock(f)
         f.write("\n".join(kept) + "\n" if kept else "")
-        fcntl.flock(f, fcntl.LOCK_UN)
+        file_unlock(f)

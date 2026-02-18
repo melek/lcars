@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Deterministic cognitive ergonomics scorer for Claude Code responses.
+"""Deterministic cognitive ergonomics scorer.
 
 Scores responses against cognitive load metrics: filler phrases, preamble
-detection, answer position, information density. Pure stdlib — no dependencies.
+position, information density. Pure stdlib — no dependencies.
 
-Hook mode (--hook): reads hook JSON from stdin, extracts transcript_path,
-scores the last assistant message, appends to store, flags drift.
+Hook mode (--hook): reads Stop hook JSON from stdin, scores the last assistant
+message, runs query-type-aware drift detection, stores results.
 """
 
 import json
@@ -13,7 +13,7 @@ import re
 import sys
 from pathlib import Path
 
-# --- Scoring patterns ---
+# --- Scoring patterns (canonical source: lcars-eval/test/score.py) ---
 
 FILLER_CATEGORIES = {
     "affect_simulation": [
@@ -89,8 +89,6 @@ FUNCTION_WORDS = frozenset({
 })
 
 
-# --- Scoring functions ---
-
 def count_words(text: str) -> int:
     return len([w for w in text.split() if w])
 
@@ -145,48 +143,17 @@ def score_response(text: str) -> dict:
     }
 
 
-# --- Transcript parsing ---
-
-def extract_last_assistant_text(transcript_path: str) -> str | None:
-    """Extract the last assistant text message from a JSONL transcript."""
-    path = Path(transcript_path)
-    if not path.exists():
-        return None
-
-    last_text = None
-    try:
-        with open(path) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-
-                if entry.get("type") != "assistant":
-                    continue
-
-                content = entry.get("message", {}).get("content", [])
-                for block in content:
-                    if block.get("type") == "text":
-                        last_text = block["text"]
-    except OSError:
-        return None
-
-    return last_text
-
-
-# --- Hook CLI ---
-
 def hook_main():
-    """Stop hook entry point. Reads hook JSON from stdin, scores, stores."""
-    from store import append_score, detect_drift, write_drift_flag, rotate_store
+    """Stop hook entry point. Score → store → drift detect → flag."""
+    # Add lib/ to path for sibling imports
+    sys.path.insert(0, str(Path(__file__).parent))
+    from transcript import extract_last_assistant_text
+    from store import append_score, write_drift_flag, rotate_store
+    from drift import detect as detect_drift
+    from classify import read_classification
 
     hook_input = json.load(sys.stdin)
 
-    # Guard against infinite loops
     if hook_input.get("stop_hook_active"):
         return
 
@@ -199,14 +166,19 @@ def hook_main():
         return
 
     score = score_response(text)
+
+    # Store score (without filler_phrases list — reasons suffice)
     store_score = {k: v for k, v in score.items() if k != "filler_phrases"}
+    query_type = read_classification()
+    store_score["query_type"] = query_type
     append_score(store_score)
 
-    drift = detect_drift(score)
-    if drift:
-        write_drift_flag(drift)
+    # Query-type-aware drift detection
+    drift_result = detect_drift(score, query_type)
+    if drift_result:
+        write_drift_flag(drift_result)
 
-    # Rotate on ~1% of invocations (amortized cost)
+    # Amortized rotation (~1% of invocations)
     import random
     if random.random() < 0.01:
         rotate_store()
@@ -216,7 +188,6 @@ if __name__ == "__main__":
     if "--hook" in sys.argv:
         hook_main()
     else:
-        # Standalone mode: score text from stdin
         text = sys.stdin.read()
         result = score_response(text)
         print(json.dumps(result, indent=2))

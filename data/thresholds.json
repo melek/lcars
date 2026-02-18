@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "global": {
+    "filler": 0,
+    "preamble": 0,
+    "density": 0.60
+  },
+  "by_query_type": {
+    "code": {
+      "density": 0.50
+    },
+    "diagnostic": {
+      "density": 0.55
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "strategies": [
+    {
+      "drift": "filler",
+      "severity": "low",
+      "query": "*",
+      "template": "[Prior response contained filler. Omit.]"
+    },
+    {
+      "drift": "filler",
+      "severity": "high",
+      "query": "*",
+      "template": "[Prior: {count} filler phrases. Cognitive load without information. Omit all.]"
+    },
+    {
+      "drift": "preamble",
+      "severity": "low",
+      "query": "*",
+      "template": "[Prior response opened with preamble. Answer first.]"
+    },
+    {
+      "drift": "preamble",
+      "severity": "high",
+      "query": "*",
+      "template": "[Prior: {position}w preamble before answer. First element = the answer.]"
+    },
+    {
+      "drift": "density",
+      "severity": "low",
+      "query": "factual",
+      "template": "[Prior response had low information density. Tighten.]"
+    },
+    {
+      "drift": "density",
+      "severity": "low",
+      "query": "code",
+      "template": "",
+      "note": "Code responses naturally have lower density due to syntax. No correction."
+    },
+    {
+      "drift": "density",
+      "severity": "low",
+      "query": "diagnostic",
+      "template": "",
+      "note": "Diagnostic responses may need step-by-step detail. No correction at low severity."
+    },
+    {
+      "drift": "density",
+      "severity": "high",
+      "query": "*",
+      "template": "[Prior response padded with function words. Increase signal density.]"
+    },
+    {
+      "drift": "compound",
+      "severity": "high",
+      "query": "*",
+      "template": "[Prior: multiple drift signals ({reasons}). Reset: transparent tool, answer first, no filler.]"
+    },
+    {
+      "drift": "compound",
+      "severity": "low",
+      "query": "*",
+      "template": "[Prior: drift on {reasons}. Correct.]"
+    }
+  ]
+}
