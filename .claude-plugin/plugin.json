@@ -1,6 +1,6 @@
 {
   "name": "lcars",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Self-correcting cognitive ergonomics for Claude Code",
   "author": {
     "name": "Lionel Di Giacomo"

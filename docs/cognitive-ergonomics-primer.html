@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cognitive Ergonomics: An Interactive Primer</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #e0e0e8;
+    --text-dim: #8888a0;
+    --accent: #6b8afd;
+    --accent-dim: #3d5199;
+    --gold: #c8a84e;
+    --green: #4eca7a;
+    --red: #e05555;
+    --orange: #e0943a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 6rem;
+  }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--accent); font-weight: 400; letter-spacing: 0.02em; }
+  h2 { font-size: 1.3rem; margin: 2.5rem 0 1rem; color: var(--gold); font-weight: 400; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1.1rem; margin: 1.5rem 0 0.6rem; color: var(--text); font-weight: 600; }
+  p { margin-bottom: 1rem; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-dim); }
+  a:hover { color: var(--gold); border-color: var(--gold); }
+  .subtitle { color: var(--text-dim); font-size: 0.95rem; margin-bottom: 2rem; font-style: italic; }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 1rem;
+    z-index: 100;
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .nav button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: system-ui, sans-serif;
+    transition: all 0.2s;
+  }
+  .nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .nav button.active { background: var(--accent-dim); color: white; border-color: var(--accent); }
+  .nav button.completed { border-color: var(--green); color: var(--green); }
+  body { padding-top: 4rem; }
+
+  /* Sections */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 2rem; margin: 1.5rem 0; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: border-color 0.3s;
+  }
+  .timeline-item:hover { border-color: var(--accent-dim); }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 1.2rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+  .timeline-year {
+    font-family: system-ui, sans-serif;
+    font-size: 0.8rem;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .timeline-title { font-weight: 600; margin-bottom: 0.3rem; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color: var(--accent-dim); }
+  .card-label {
+    font-family: system-ui, sans-serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+  }
+
+  /* Expandable */
+  .expandable { margin: 0.8rem 0; }
+  .expand-trigger {
+    cursor: pointer;
+    padding: 0.7rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    font-family: inherit;
+    color: var(--text);
+    font-size: 0.95rem;
+    width: 100%;
+    text-align: left;
+  }
+  .expand-trigger:hover { border-color: var(--accent-dim); }
+  .expand-trigger::after {
+    content: '+';
+    font-family: system-ui, sans-serif;
+    color: var(--accent);
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+  }
+  .expand-trigger.open::after { content: '\2212'; }
+  .expand-content {
+    display: none;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    background: var(--surface2);
+    font-size: 0.92rem;
+  }
+  .expand-content.open { display: block; }
+
+  /* Quiz */
+  .quiz {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .quiz-question {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+  .quiz-options { list-style: none; }
+  .quiz-options li {
+    padding: 0.6rem 1rem;
+    margin: 0.4rem 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.92rem;
+  }
+  .quiz-options li:hover { border-color: var(--accent); background: var(--surface2); }
+  .quiz-options li.correct { border-color: var(--green); background: rgba(78, 202, 122, 0.1); }
+  .quiz-options li.incorrect { border-color: var(--red); background: rgba(224, 85, 85, 0.1); }
+  .quiz-options li.disabled { pointer-events: none; opacity: 0.6; }
+  .quiz-explanation {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    background: var(--surface2);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    border-left: 3px solid var(--accent);
+  }
+  .quiz-explanation.show { display: block; }
+
+  /* Concept map */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 600px) { .concept-grid { grid-template-columns: 1fr; } }
+  .concept-item {
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  .concept-item strong { color: var(--accent); }
+
+  /* Progress */
+  .progress-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--surface);
+    z-index: 100;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s;
+    width: 0%;
+  }
+
+  /* Key term */
+  .term {
+    color: var(--gold);
+    cursor: help;
+    border-bottom: 1px dashed var(--gold);
+  }
+
+  /* Quote */
+  blockquote {
+    border-left: 3px solid var(--accent-dim);
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* Lists */
+  ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+  li { margin-bottom: 0.4rem; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+  th, td { padding: 0.5rem 0.8rem; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--surface); color: var(--gold); font-weight: 600; font-family: system-ui, sans-serif; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .figure {
+    text-align: center;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .figure-caption {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 0.8rem;
+    font-style: italic;
+  }
+  .diagram {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--accent);
+    white-space: pre;
+    text-align: left;
+    display: inline-block;
+  }
+</style>
+</head>
+<body>
+
+<div class="nav" id="nav"></div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ==================== SECTION 0: INTRODUCTION ==================== -->
+<div class="section active" id="sec-0">
+<h1>Cognitive Ergonomics</h1>
+<p class="subtitle">An interactive primer from first principles</p>
+
+<p>Cognitive ergonomics is the study of how mental processes &mdash; perception, attention, memory, reasoning, decision-making &mdash; interact with the design of systems, tools, and environments. It asks: <em>given that human cognition has specific capacities and constraints, how should we design things so they work with those constraints rather than against them?</em></p>
+
+<p>This primer covers the field from its roots in experimental psychology through its modern application to AI interface design. It is structured as a sequence of chapters, each building on the last. Work through them in order, or navigate freely.</p>
+
+<div class="card">
+  <div class="card-label">What you'll learn</div>
+  <ol>
+    <li>The pre-history: how World War II forced the question of cognitive limits</li>
+    <li>Foundational theories: attention, working memory, cognitive load</li>
+    <li>The field's formation: from physical ergonomics to cognitive ergonomics</li>
+    <li>Academic home: where the field lives in university curricula today</li>
+    <li>Core frameworks: SRK, situation awareness, joint cognitive systems</li>
+    <li>Tool transparency: Heidegger's distinction applied to interface design</li>
+    <li>Modern convergence: cognitive ergonomics meets LLM design</li>
+    <li>Emerging systems: context engineering, competitive landscape, and where the scholarship leads</li>
+  </ol>
+</div>
+
+<p>Each chapter includes self-check questions. These aren't tests &mdash; they're tools for verifying that a concept has landed before building on it.</p>
+</div>
+
+<!-- ==================== SECTION 1: PRE-HISTORY ==================== -->
+<div class="section" id="sec-1">
+<h2>1. Pre-History: The Body Problem Becomes the Mind Problem</h2>
+
+<p>Ergonomics began with bodies. The term itself comes from the Greek <em>ergon</em> (work) + <em>nomos</em> (law). Polish scientist Wojciech Jastrz&#281;bowski used it in 1857 in "The Outline of Ergonomics; i.e. Science of Work, Based on the Truths Taken from the Natural Science." But the field didn't coalesce until a specific historical pressure forced it.</p>
+
+<h3>The War as Catalyst</h3>
+
+<p>World War II produced machinery that exceeded human capacity to operate it. Aircraft cockpits had controls that looked identical but did different things. Radar operators missed targets not because the equipment failed, but because their attention did. The problem shifted: it wasn't that machines were poorly built &mdash; it was that they were built without accounting for how humans actually perceive, attend, and decide.</p>
+
+<p>Before the war, the dominant approach was <strong>selection and training</strong>: find the right person for the machine, train them harder. The war proved this couldn't scale. Too many operators, too little time, too many errors that training couldn't fix. The alternative: <strong>design the machine around the human</strong>.</p>
+
+<div class="card">
+  <div class="card-label">Key shift</div>
+  <p><strong>Pre-war:</strong> "The human must adapt to the machine."<br>
+  <strong>Post-war:</strong> "The machine must be designed for the human."</p>
+  <p>This inversion is the founding insight of the entire field. Every subsequent development &mdash; cognitive load theory, situation awareness, calm technology &mdash; is a refinement of this principle applied to increasingly cognitive (rather than physical) tasks.</p>
+</div>
+
+<h3>Institutional Formation</h3>
+
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="timeline-year">1949</div>
+    <div class="timeline-title">The Ergonomics Society (UK)</div>
+    <p>British psychologist Hywel Murrell coins the English term "ergonomics" at a meeting at the UK Admiralty. The society brings together psychologists, physiologists, and engineers.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1951</div>
+    <div class="timeline-title">The Fitts List (MABA-MABA)</div>
+    <p>Paul Fitts publishes "Human Engineering for an Effective Air-Navigation and Traffic-Control System." It contains a now-famous list: <em>Men Are Better At / Machines Are Better At.</em> Humans excel at pattern recognition, flexible response, and judgment under ambiguity. Machines excel at speed, precision, repetition, and sustained vigilance. This becomes the first systematic framework for function allocation.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1957</div>
+    <div class="timeline-title">Human Factors Society (US)</div>
+    <p>The US establishes its own professional society, reflecting a transatlantic split in terminology: "human factors" (US) vs. "ergonomics" (Europe). The referent is identical.</p>
+  </div>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Why does the US/Europe terminology split matter?</button>
+  <div class="expand-content">
+    <p>It doesn't, substantively. "Human factors" and "ergonomics" refer to the same discipline. But the split reflects a deeper cultural difference: American human factors grew from engineering psychology (applied, military-industrial), while European ergonomics grew from occupational physiology and work science (labor-oriented, social). This difference in emphasis &mdash; engineering vs. labor &mdash; influenced how cognitive ergonomics developed on each side of the Atlantic.</p>
+  </div>
+</div>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: What was the key insight that WWII forced?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">Better training methods were needed for complex equipment</li>
+    <li onclick="checkAnswer(this, true)">Equipment must be designed around human cognitive constraints, not the reverse</li>
+    <li onclick="checkAnswer(this, false)">Machines should be simplified to reduce the need for human operators</li>
+    <li onclick="checkAnswer(this, false)">Human performance is primarily limited by physical fatigue</li>
+  </ul>
+  <div class="quiz-explanation">The pre-war assumption was that you select and train people to fit machines. WWII showed this doesn't scale &mdash; the machines needed to be designed around human perception, attention, and decision-making. This is the founding principle: design for the human, not the other way around.</div>
+</div>
+</div>
+
+<!-- ==================== SECTION 2: COGNITIVE FOUNDATIONS ==================== -->
+<div class="section" id="sec-2">
+<h2>2. Cognitive Foundations: Attention, Memory, Load</h2>
+
+<p>Cognitive ergonomics depends on cognitive psychology for its model of the human operator. Three foundational results from the 1950s-1980s provide the theoretical base.</p>
+
+<h3>2.1 Attention as a Bottleneck</h3>
+
+<p><strong>Donald Broadbent (1958)</strong> published <em>Perception and Communication</em>, which established the <span class="term" title="The theory that sensory information is filtered at an early stage, before semantic processing, based on physical characteristics like location, pitch, or color.">filter theory of attention</span>. Using dichotic listening experiments (different audio streams in each ear), he showed that humans cannot process two meaningful streams simultaneously. Attention is a bottleneck: information must pass through a selective filter, and unattended stimuli are blocked before reaching conscious processing.</p>
+
+<div class="card">
+  <div class="card-label">Why this matters for design</div>
+  <p>If attention is a filter, then every element in an interface competes for passage through that filter. Elements that don't serve the user's current task aren't neutral &mdash; they actively consume filtering capacity. This is the theoretical basis for removing filler, preambles, and social signals from tool interfaces: they force the attention filter to process and reject them before the useful content can pass through.</p>
+</div>
+
+<p>Later work refined the model. <strong>Anne Treisman (1964)</strong> proposed an attenuation model: unattended information isn't fully blocked but is turned down, like a volume knob. <strong>Christopher Wickens (1984, 2002)</strong> developed <span class="term" title="Different cognitive tasks draw on different pools of processing resources (visual, auditory, spatial, verbal). Two tasks interfere more when they share resource pools.">Multiple Resource Theory</span>: attention isn't a single pool but multiple resource channels (visual/auditory, spatial/verbal, perception/response). Two tasks interfere more when they share the same channels.</p>
+
+<h3>2.2 Working Memory Limits</h3>
+
+<p><strong>George Miller (1956)</strong> published "The Magical Number Seven, Plus or Minus Two" in <em>Psychological Review</em>. Through experiments on immediate recall, absolute judgment, and span of attention, Miller found a consistent limit: humans can hold approximately 7 &plusmn; 2 chunks in short-term memory.</p>
+
+<p>The critical insight is the concept of a <span class="term" title="A unit of information that is meaningful to the person. An experienced chess player 'chunks' board positions into strategic patterns; a novice sees individual pieces.">chunk</span>: the limit is not on raw information but on meaningful units. An expert sees a chess position as 3-4 strategic patterns (chunks); a novice sees 20+ individual pieces. Expertise compresses information into fewer, larger chunks.</p>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Was Miller actually right about 7?</button>
+  <div class="expand-content">
+    <p>Not quite. Miller himself used "seven" rhetorically &mdash; "My problem is that I have been persecuted by an integer." Later research by Cowan (2001) revised the estimate to 4 &plusmn; 1 for unrelated items without rehearsal. But the deeper point stands: working memory capacity is severely limited, and design must account for this. Whether the limit is 4 or 7, the design implication is the same &mdash; present information in chunks, minimize the number of things that must be held simultaneously, and front-load the most important element.</p>
+  </div>
+</div>
+
+<h3>2.3 Cognitive Load Theory</h3>
+
+<p><strong>John Sweller (1988)</strong> formalized <span class="term" title="A framework distinguishing three types of cognitive load: intrinsic (inherent task complexity), extraneous (load from poor design), and germane (load that supports learning/schema formation).">Cognitive Load Theory</span> (CLT), originally in instructional design but now applied broadly. It distinguishes three types of cognitive load:</p>
+
+<div class="concept-grid">
+  <div class="concept-item">
+    <strong>Intrinsic load</strong><br>
+    Inherent to the task itself. Determined by the number of interacting elements. Cannot be reduced without changing the task.
+  </div>
+  <div class="concept-item">
+    <strong>Extraneous load</strong><br>
+    Imposed by poor design. Does not contribute to understanding or task completion. <em>Can and should be eliminated.</em>
+  </div>
+  <div class="concept-item">
+    <strong>Germane load</strong><br>
+    Cognitive effort devoted to building schemas and understanding. The "good" load &mdash; what you want the user's working memory to be spent on.
+  </div>
+  <div class="concept-item">
+    <strong>Design principle</strong><br>
+    Minimize extraneous load to free working memory for intrinsic processing. The original formulation (total = intrinsic + extraneous + germane) was revised circa 2010: germane load is now understood as the productive use of freed capacity, not a separate category to maximize.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-label">Application to LLM design</div>
+  <p>Sweller's framework applies directly to LLM output. Social pleasantries ("Great question!"), process narration ("Let me think about..."), and interaction extension ("Let me know if you need anything else!") are textbook <em>extraneous cognitive load</em>. They consume working memory without contributing to the user's task. Eliminating them frees capacity for the actual answer.</p>
+</div>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: A response begins "Great question! Let me think about that. Based on my analysis..." before giving the answer. Which type of cognitive load does the preamble impose?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">Intrinsic &mdash; it's part of the task content</li>
+    <li onclick="checkAnswer(this, true)">Extraneous &mdash; it's design overhead that doesn't contribute to task completion</li>
+    <li onclick="checkAnswer(this, false)">Germane &mdash; it helps the user build a mental model of the answer</li>
+    <li onclick="checkAnswer(this, false)">None &mdash; social framing has no cognitive cost</li>
+  </ul>
+  <div class="quiz-explanation">"Great question!" (engagement filler), "Let me think about that" (process narration), and "Based on my analysis" (preamble) are all extraneous load. They force the user to process content that doesn't contribute to their task. The user must attend to and then discard this content before reaching the actual answer. Sweller's CLT predicts this reduces available working memory for the answer itself.</div>
+</div>
+</div>
+
+<!-- ==================== SECTION 3: FIELD FORMATION ==================== -->
+<div class="section" id="sec-3">
+<h2>3. Field Formation: Physical to Cognitive</h2>
+
+<p>Ergonomics began with the body: chair heights, control layouts, lighting. The shift to <em>cognitive</em> ergonomics was driven by a technology change &mdash; the personal computer &mdash; and an intellectual convergence between cognitive psychology, AI research, and systems engineering.</p>
+
+<div class="card">
+  <div class="card-label">The naming</div>
+  <p>The term <strong>"cognitive ergonomics"</strong> entered formal use when the first European Conference on Cognitive Ergonomics (ECCE) convened at the Free University of Amsterdam in 1982. Before that, the ideas existed under various labels &mdash; engineering psychology, human information processing, cognitive human factors &mdash; but lacked a unifying name. The conference crystallized the field as distinct from physical ergonomics: a discipline concerned with how perception, attention, memory, and decision-making interact with system design. The European Association of Cognitive Ergonomics (EACE) followed in 1987, giving the field both a name and an institutional home.</p>
+</div>
+
+<h3>The Convergence</h3>
+
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="timeline-year">1968</div>
+    <div class="timeline-title">Dijkstra: "A Case Against the GO TO Statement"</div>
+    <p>Edsger Dijkstra publishes a letter in <em>Communications of the ACM</em> arguing that goto statements make programs cognitively intractable. The editor (Niklaus Wirth) retitled it "Go To Statement Considered Harmful." The argument is implicitly cognitive-ergonomic: certain programming constructs exceed human ability to trace program flow. Design the language around the programmer's cognitive limits, not the machine's execution model.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1972</div>
+    <div class="timeline-title">Dijkstra: "The Humble Programmer"</div>
+    <p>Dijkstra's Turing Award lecture (EWD 340) states the cognitive ergonomics thesis for software, a decade before the field had a name: <em>"The competent programmer is fully aware of the strictly limited size of his own skull; therefore he approaches the programming task in full humility."</em> His structured programming movement &mdash; separation of concerns, hierarchical decomposition, disciplined abstraction &mdash; was cognitive load management applied to code. In a later essay (EWD 356, 1972): <em>"The purpose of abstraction is not to be vague, but to create a new semantic level in which one can be absolutely precise."</em></p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1979</div>
+    <div class="timeline-title">Rasmussen: Skills, Rules, Knowledge</div>
+    <p>Jens Rasmussen at Ris&oslash; National Laboratory in Denmark publishes the SRK framework, distinguishing three levels of cognitive control in human performance. This becomes foundational for cognitive ergonomics and safety science.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1981</div>
+    <div class="timeline-title">Norman: Action Slips</div>
+    <p>Donald Norman publishes his categorization of action slips, building on Rasmussen's SRK taxonomy. Errors are not random &mdash; they follow predictable patterns based on which cognitive level (skill, rule, knowledge) is active.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1982</div>
+    <div class="timeline-title">First ECCE Conference</div>
+    <p>The European Conference on Cognitive Ergonomics launches at the Free University of Amsterdam. For the first time, cognitive ergonomics has its own institutional home, distinct from physical ergonomics.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1983</div>
+    <div class="timeline-title">Hollnagel & Woods: Cognitive Systems Engineering</div>
+    <p>Erik Hollnagel and David Woods publish the first articulation of Cognitive Systems Engineering (CSE) from Ris&oslash; National Laboratory. CSE treats human + technology as a single "joint cognitive system" rather than separate components. This reframes the unit of analysis.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1986</div>
+    <div class="timeline-title">Winograd & Flores: Tool Transparency</div>
+    <p><em>Understanding Computers and Cognition</em> applies Heidegger's phenomenology to interface design. Introduces the ready-to-hand / present-at-hand distinction as a design principle.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1987</div>
+    <div class="timeline-title">EACE Founded</div>
+    <p>The European Association of Cognitive Ergonomics is formally established in Paris.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1988</div>
+    <div class="timeline-title">Norman: The Design of Everyday Things</div>
+    <p>Donald Norman publishes his landmark book, bringing human-centered design to a broad audience. Introduces affordances, signifiers, and the Gulf of Evaluation/Execution.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">1990</div>
+    <div class="timeline-title">Reason: Human Error</div>
+    <p>James Reason publishes <em>Human Error</em>, synthesizing Rasmussen's SRK with Norman's error taxonomy. Introduces the Swiss Cheese Model of system failures. Errors are seen as systemic, not individual.</p>
+  </div>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">The Danish-Anglo axis: Why Denmark?</button>
+  <div class="expand-content">
+    <p>It's notable that much of cognitive ergonomics' foundational work came from a small nuclear research laboratory in Roskilde, Denmark. Ris&oslash; National Laboratory was studying nuclear safety, which required understanding human operator cognition under high-stakes conditions. Rasmussen's SRK framework, Hollnagel and Woods' CSE, and later resilience engineering all trace back to this single institution. The nuclear domain forced the question: when things go wrong, is it the human's fault or the system's design? The answer &mdash; the system's design &mdash; became the field's organizing principle.</p>
+  </div>
+</div>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: What distinguishes cognitive systems engineering from earlier human factors work?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">It focuses on software rather than hardware interfaces</li>
+    <li onclick="checkAnswer(this, false)">It applies cognitive psychology to workplace design</li>
+    <li onclick="checkAnswer(this, true)">It treats human + technology as a single joint cognitive system rather than separate components</li>
+    <li onclick="checkAnswer(this, false)">It prioritizes error prevention over error tolerance</li>
+  </ul>
+  <div class="quiz-explanation">Traditional human factors studied the human component and the technology component separately, then tried to optimize their interface. Hollnagel and Woods' CSE insight was to treat the human-technology ensemble as a single unit of analysis &mdash; a "joint cognitive system" that performs cognitive work as a whole. This changes the question from "how does the human interact with the machine?" to "how does the joint system perform cognitive work?"</div>
+</div>
+</div>
+
+<!-- ==================== SECTION 4: ACADEMIC HOME ==================== -->
+<div class="section" id="sec-4">
+<h2>4. Academic Home: Where the Field Lives Today</h2>
+
+<p>Cognitive ergonomics doesn't have a single departmental home. It sits at the intersection of several established disciplines, which is both a strength (multiple perspectives) and a source of confusion (no one department "owns" it). Understanding where the field is taught reveals its nature as an applied, interdisciplinary science.</p>
+
+<h3>The Three Branches</h3>
+
+<p>The International Ergonomics Association (IEA, founded 1959) defines three branches of ergonomics. Cognitive ergonomics is one:</p>
+
+<div class="card">
+  <div class="card-label">IEA taxonomy</div>
+  <ol>
+    <li><strong>Physical ergonomics</strong> &mdash; biomechanics, posture, repetitive motion, workplace layout. The original branch (1940s&ndash;).</li>
+    <li><strong>Cognitive ergonomics</strong> &mdash; perception, memory, reasoning, decision-making as they affect human-system interaction. Formalized 1980s.</li>
+    <li><strong>Organizational ergonomics</strong> &mdash; sociotechnical systems, teamwork, communication, work design. Emerged alongside the sociotechnical movement (1960s&ndash;).</li>
+  </ol>
+  <p>Most academic programs teach all three under the umbrella of "Human Factors and Ergonomics" (HF&amp;E), with cognitive ergonomics as a specialization within the broader field.</p>
+</div>
+
+<h3>Disciplinary Homes</h3>
+
+<p>Cognitive ergonomics is taught across at least four types of departments, each bringing a different emphasis:</p>
+
+<div class="concept-grid">
+  <div class="concept-item">
+    <div class="concept-label">Industrial &amp; Systems Engineering</div>
+    <p>Most common home. Focus on optimizing complex systems including human operators. Programs at Virginia Tech, Georgia Tech, Penn State, Ohio State, University at Buffalo, Wisconsin-Madison.</p>
+  </div>
+  <div class="concept-item">
+    <div class="concept-label">Psychology Departments</div>
+    <p>Housed under "Engineering Psychology" or "Human Factors &amp; Applied Cognition." Emphasis on experimental methods and cognitive modeling. UCF, NC State, George Mason, Illinois.</p>
+  </div>
+  <div class="concept-item">
+    <div class="concept-label">Design &amp; HCI Programs</div>
+    <p>Cognitive ergonomics provides theoretical foundations for interaction design and UX. University of Minnesota (Design dept), Chalmers University, University of Genova.</p>
+  </div>
+  <div class="concept-item">
+    <div class="concept-label">Interdisciplinary Programs</div>
+    <p>Standalone Human Factors departments or cross-departmental programs. San Jose State, Michigan Tech (Cognitive &amp; Learning Sciences), Tufts (standalone BS in Human Factors Engineering).</p>
+  </div>
+</div>
+
+<p>The same field, studied in an engineering department, emphasizes system optimization; in a psychology department, cognitive mechanisms; in a design department, interface application. The content overlaps substantially &mdash; the framing differs.</p>
+
+<h3>Where It Appears in Curricula</h3>
+
+<p>Cognitive ergonomics can appear as a <strong>standalone course</strong> or <strong>embedded</strong> within broader courses. Both patterns exist:</p>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Standalone cognitive ergonomics courses</button>
+  <div class="expand-content">
+    <ul>
+      <li><strong>UC Berkeley ERG130</strong>: "Cognitive Human Factors and Ergonomics" &mdash; human information processing, controls/displays, sensory and cognitive contributions to system design</li>
+      <li><strong>University of Waterloo SYDE543</strong>: "Cognitive Ergonomics" &mdash; cognitive ergonomic concepts, research methods, accident analysis, systems design (Systems Design Engineering)</li>
+      <li><strong>Chalmers University MPP036</strong>: "Cognitive Ergonomics" &mdash; the human as decision-maker in technical systems, human-machine system analysis via group projects</li>
+      <li><strong>University of Derby</strong>: "Cognitive Ergonomics and Psychology" &mdash; 10-week certificate covering cognitive factors, psychosocial factors, individual differences</li>
+      <li><strong>University of Genova</strong>: "Cognitive Ergonomics" &mdash; user-centered design, interactive systems, interface design</li>
+    </ul>
+  </div>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Broader courses that embed cognitive ergonomics</button>
+  <div class="expand-content">
+    <p>More commonly, cognitive ergonomics appears as a major topic within:</p>
+    <ul>
+      <li>Introduction to Human Factors</li>
+      <li>Engineering Psychology</li>
+      <li>Human-Computer Interaction</li>
+      <li>Human Information Processing</li>
+      <li>System Safety and Human Reliability</li>
+      <li>Cognitive Psychology (applied sections)</li>
+      <li>Industrial Ergonomics</li>
+    </ul>
+    <p>UC Berkeley's program illustrates the pattern: <strong>ERG100</strong> (Foundations) covers all three branches, then students specialize via <strong>ERG130</strong> (Cognitive) or physical/organizational modules.</p>
+  </div>
+</div>
+
+<h3>Degree Levels</h3>
+
+<p>The field spans all three degree levels, but the center of gravity is at the graduate level:</p>
+
+<div class="card">
+  <div class="card-label">Degree landscape</div>
+  <ul>
+    <li><strong>Bachelor's</strong> &mdash; Rare as a standalone degree. ASU (BS Human Systems Engineering), Tufts (BS Human Factors Engineering), Embry-Riddle. More commonly a concentration within industrial engineering or psychology.</li>
+    <li><strong>Master's</strong> &mdash; The primary entry point for practitioners. 1&ndash;2 years, 30&ndash;45 credits. Northeastern, Wright State, San Jose State, Virginia Tech, Wisconsin-Madison (accelerated 1-year). Many offer online options.</li>
+    <li><strong>PhD</strong> &mdash; Research-focused, 4&ndash;5 years. UCF, NC State, George Mason, University of Minnesota, Penn State, Embry-Riddle. Embry-Riddle is the only US university offering all three levels (BS, MS, PhD) in Human Factors.</li>
+    <li><strong>Certificates</strong> &mdash; Available for professionals seeking targeted training (UC Berkeley, University of Derby). Typically 8&ndash;10 weeks.</li>
+  </ul>
+</div>
+
+<h3>Professional Infrastructure</h3>
+
+<p>The field has mature professional organizations and certification, which distinguishes it from newer adjacent fields like UX design:</p>
+
+<div class="concept-grid">
+  <div class="concept-item">
+    <div class="concept-label">HFES (est. 1957)</div>
+    <p>Human Factors and Ergonomics Society. US-based, 4,500+ members. Maintains a graduate programs directory (~90 programs, 19 accredited). Publishes <em>Human Factors</em> journal.</p>
+  </div>
+  <div class="concept-item">
+    <div class="concept-label">IEA (est. 1959)</div>
+    <p>International Ergonomics Association. Global federation. Establishes Core Competencies in HF&amp;E (updated 2021). Endorses certification systems worldwide.</p>
+  </div>
+  <div class="concept-item">
+    <div class="concept-label">EACE (est. 1987; ECCE conference series from 1982)</div>
+    <p>European Association of Cognitive Ergonomics. Formally constituted in 1987; the ECCE conference series began in 1982 at the Free University of Amsterdam. Organizes the annual European Conference on Cognitive Ergonomics. The society most specifically focused on the cognitive branch.</p>
+  </div>
+  <div class="concept-item">
+    <div class="concept-label">BCPE</div>
+    <p>Board of Certification in Professional Ergonomics. Offers the Certified Professional Ergonomist (CPE) credential: graduate degree + 3 years experience + exam.</p>
+  </div>
+</div>
+
+<h3>Relationship to Adjacent Fields</h3>
+
+<p>Cognitive ergonomics overlaps with but is distinct from several neighboring disciplines. The boundaries are pragmatic rather than sharp:</p>
+
+<div class="card">
+  <div class="card-label">Field distinctions</div>
+  <ul>
+    <li><strong>HCI</strong> focuses on user-computer interaction; cognitive ergonomics considers the entire work system (organizational, historical, environmental factors). As the Interaction Design Foundation notes: cognitive ergonomics has a "broader focus of the analysis to include the worksystem as a whole."</li>
+    <li><strong>UX design</strong> is an applied subdomain. Cognitive ergonomics provides theoretical foundations (cognitive load, attention limits, mental models); UX applies them to digital product design.</li>
+    <li><strong>Safety engineering</strong> draws on cognitive ergonomics for human error analysis, decision-making under stress, situation awareness, and human reliability assessment.</li>
+    <li><strong>Occupational psychology</strong> studies worker behavior, motivation, and stress broadly; cognitive ergonomics applies these insights specifically to system and interface design.</li>
+    <li><strong>Engineering psychology</strong> is often used interchangeably with cognitive ergonomics. The annual EPCE conference (Engineering Psychology and Cognitive Ergonomics, running since 1996) treats them as a single field.</li>
+  </ul>
+</div>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: Why does cognitive ergonomics appear in so many different departments rather than having a single academic home?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">The field is too small to sustain its own department</li>
+    <li onclick="checkAnswer(this, true)">It is inherently interdisciplinary &mdash; it applies cognitive science to engineering design problems, requiring both perspectives</li>
+    <li onclick="checkAnswer(this, false)">Different universities simply chose different names for the same program</li>
+    <li onclick="checkAnswer(this, false)">The field hasn't matured enough to establish its own identity</li>
+  </ul>
+  <div class="quiz-explanation">Cognitive ergonomics sits at the intersection of cognition (psychology/cognitive science) and system design (engineering). Neither discipline alone covers the full scope: psychology provides the theory of how cognition works; engineering provides the design context in which that cognition operates. The interdisciplinary nature isn't a weakness or sign of immaturity &mdash; it's inherent to the field's purpose. HFES accredits programs across multiple departments, and the IEA defines competencies rather than departmental affiliation. The same field studied in engineering emphasizes optimization; in psychology, mechanisms; in design, application.</div>
+</div>
+</div>
+
+<!-- ==================== SECTION 5: CORE FRAMEWORKS ==================== -->
+<div class="section" id="sec-5">
+<h2>5. Core Frameworks</h2>
+
+<p>Three frameworks form the working toolkit of cognitive ergonomics. Each addresses a different aspect of human cognition in systems.</p>
+
+<h3>4.1 Rasmussen's SRK Framework</h3>
+
+<p>Jens Rasmussen's Skills-Rules-Knowledge (1979, 1983) framework describes three levels of cognitive control:</p>
+
+<div class="figure">
+  <div class="diagram">Knowledge-based    [ANALYZE]    Novel situations
+      |                              Slow, effortful, error-prone
+      |
+Rule-based         [IF-THEN]     Familiar patterns
+      |                              Moderate effort, rule errors
+      |
+Skill-based        [AUTO]        Practiced routines
+                                     Fast, effortless, slip errors</div>
+  <div class="figure-caption">The SRK hierarchy: cognitive control shifts between levels based on task familiarity. Errors at each level are qualitatively different.</div>
+</div>
+
+<table>
+  <tr><th>Level</th><th>Mode</th><th>Error type</th><th>Example</th></tr>
+  <tr><td>Skill</td><td>Automatic, pattern-driven</td><td>Slips (right intention, wrong action)</td><td>Typing password on wrong keyboard</td></tr>
+  <tr><td>Rule</td><td>Stored if-then procedures</td><td>Rule misapplication</td><td>Applying yesterday's fix to today's different bug</td></tr>
+  <tr><td>Knowledge</td><td>Conscious analysis</td><td>Mistakes (wrong mental model)</td><td>Debugging with an incorrect theory of the system</td></tr>
+</table>
+
+<p>The design implication: support each level differently. For skill-based performance, ensure consistent spatial/temporal patterns. For rule-based, make the current state visible so the right rule fires. For knowledge-based, provide the information needed for reasoning &mdash; and minimize extraneous load that consumes the working memory needed for analysis.</p>
+
+<h3>4.2 Endsley's Situation Awareness</h3>
+
+<p><strong>Mica Endsley (1995)</strong> formalized <span class="term" title="The perception of elements in the environment, the comprehension of their meaning, and the projection of their status in the near future.">situation awareness</span> (SA) as a three-level model:</p>
+
+<div class="concept-grid">
+  <div class="concept-item">
+    <strong>Level 1: Perception</strong><br>
+    Detecting the relevant elements in the environment. Prerequisite for everything else. Failure here is catastrophic &mdash; you can't comprehend what you haven't perceived.
+  </div>
+  <div class="concept-item">
+    <strong>Level 2: Comprehension</strong><br>
+    Integrating perceived elements into a coherent understanding of the current situation. Pattern recognition, schema matching.
+  </div>
+  <div class="concept-item">
+    <strong>Level 3: Projection</strong><br>
+    Anticipating future states based on current comprehension. Enables proactive rather than reactive decisions.
+  </div>
+  <div class="concept-item">
+    <strong>Design principle</strong><br>
+    Present information in forms that support comprehension and projection, not just raw perception. A dashboard of numbers (Level 1) is less useful than a trend line (Level 2) or an alert for projected threshold breach (Level 3).
+  </div>
+</div>
+
+<h3>4.3 Joint Cognitive Systems</h3>
+
+<p>Hollnagel and Woods' (1983, 2005) <span class="term" title="The unit of analysis in cognitive systems engineering: the human-technology ensemble treated as a single entity performing cognitive work.">joint cognitive system</span> (JCS) framework redefines the unit of analysis. Rather than studying "the human" and "the machine" separately:</p>
+
+<blockquote>"The focus should be on how the joint system &mdash; people and technology together &mdash; achieves cognitive work, rather than on how the human component alone processes information."</blockquote>
+
+<p>This matters because it shifts design from "make the interface usable for the human" to "make the joint system perform well." A tool that requires the human to do unnecessary cognitive work (parsing social signals, filtering preambles) is a joint system with poor cognitive economy &mdash; even if the interface is technically "usable."</p>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: A pilot misreads an altimeter and descends to the wrong altitude. In SRK terms, what level of error is this?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, true)">Skill-based slip &mdash; correct procedure, incorrect perceptual input due to display design</li>
+    <li onclick="checkAnswer(this, false)">Rule-based error &mdash; wrong procedure applied to the situation</li>
+    <li onclick="checkAnswer(this, false)">Knowledge-based mistake &mdash; incorrect mental model of the altimeter</li>
+    <li onclick="checkAnswer(this, false)">This isn't a cognitive error &mdash; the pilot wasn't paying attention</li>
+  </ul>
+  <div class="quiz-explanation">Misreading a display is a skill-based slip: the pilot intended to read the altitude correctly (right intention) but the perceptual action produced the wrong result. This is precisely the kind of error that cognitive ergonomics targets through design &mdash; if the altimeter display is redesigned to be less ambiguous, the slip cannot occur regardless of training. "The pilot wasn't paying attention" is the pre-war answer that the field was founded to move beyond.</div>
+</div>
+</div>
+
+<!-- ==================== SECTION 6: TOOL TRANSPARENCY ==================== -->
+<div class="section" id="sec-6">
+<h2>6. Tool Transparency: The Heideggerian Turn</h2>
+
+<p>This chapter covers the single most influential concept for applying cognitive ergonomics to AI interfaces.</p>
+
+<h3>Ready-to-Hand vs. Present-at-Hand</h3>
+
+<p>Martin Heidegger (1927, <em>Being and Time</em>) distinguished two modes of relating to equipment:</p>
+
+<div class="concept-grid">
+  <div class="concept-item">
+    <strong>Zuhandenheit (Ready-to-hand)</strong><br>
+    The tool disappears in use. A carpenter using a hammer doesn't think about the hammer &mdash; they think about the nail. The tool is transparent, an extension of the person's intentionality. Skilled use means the tool is not an object of attention.
+  </div>
+  <div class="concept-item">
+    <strong>Vorhandenheit (Present-at-hand)</strong><br>
+    The tool becomes visible as an object. This happens during <em>breakdown</em>: the hammer is too heavy, the handle breaks, the nail bends. Now the carpenter must attend to the tool itself, interrupting the flow of work. The tool has become an obstacle rather than an extension.
+  </div>
+</div>
+
+<p><strong>Winograd and Flores (1986)</strong> applied this directly to computer design in <em>Understanding Computers and Cognition</em>. Their argument: well-designed computer tools should be <em>ready-to-hand</em> &mdash; transparent in use, not objects of attention. Breakdown occurs when the tool demands that the user attend to the tool itself rather than the task.</p>
+
+<div class="card">
+  <div class="card-label">The earliest tool-not-entity statement</div>
+  <p><strong>Ada Lovelace (1843)</strong>, in Note G of her annotations on Menabrea's description of Babbage's Analytical Engine, wrote: <em>"The Analytical Engine has no pretensions whatever to originate anything. It can do whatever we know how to order it to perform. It can follow analysis; but it has no power of anticipating any analytical relations or truths."</em> This is the first articulation of tool transparency in computing &mdash; 143 years before Winograd and Flores. The machine is an instrument, not an entity. It does not pretend to originate. The irony is that 180 years later, RLHF training optimizes LLMs to do exactly what Lovelace said machines cannot: simulate origination, social presence, and autonomous judgment. The cognitive ergonomics argument is that Lovelace's framing was not a limitation but the correct design principle.</p>
+</div>
+
+<h3>Breakdown in AI Interfaces</h3>
+
+<p>Every social signal, every process narration, every preamble is a <span class="term" title="A moment when a tool shifts from ready-to-hand (transparent) to present-at-hand (visible as an object), interrupting task flow.">breakdown event</span>. When a tool responds "Great question! I'd be happy to help with that. Let me think about this..." the user is forced to:</p>
+
+<ol>
+  <li>Parse the social signal (is this meaningful? no &mdash; discard)</li>
+  <li>Process the rapport simulation (do I need to respond? no &mdash; discard)</li>
+  <li>Filter the process narration (is the thinking relevant? no &mdash; wait for actual content)</li>
+  <li>Finally reach the answer</li>
+</ol>
+
+<p>Each step makes the tool <em>present-at-hand</em>. The tool has become visible as a social entity rather than transparent as a retrieval instrument. The user is now attending to the tool instead of their task.</p>
+
+<div class="card">
+  <div class="card-label">The calm technology connection</div>
+  <p><strong>Mark Weiser (1991)</strong> at Xerox PARC independently articulated the same principle: "The most profound technologies are those that disappear. They weave themselves into the fabric of everyday life until they are indistinguishable from it." His concept of <span class="term" title="Technology that informs without demanding attention, moving easily between the periphery and center of awareness.">calm technology</span> extends Heidegger's ready-to-hand to all computing: technology should move between periphery and center of attention as needed, never demanding attention when none is required.</p>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Csikszentmihalyi and flow disruption</button>
+  <div class="expand-content">
+    <p>Mihaly Csikszentmihalyi's (1990) concept of <em>flow</em> &mdash; the state of complete absorption in a task &mdash; adds another dimension. Flow requires uninterrupted focused attention. Social signals from a tool create what Mark, Gudith &amp; Klocke (2008) measured as a ~23 minute recovery cost after interruption. Even micro-interruptions (parsing a "Great question!") generate attention residue (Leroy, 2009) &mdash; fragments of the interrupted processing that persist and reduce performance on the primary task.</p>
+    <p>Tool transparency isn't just about interface aesthetics. It's about protecting the cognitive conditions for deep work.</p>
+  </div>
+</div>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: A developer asks an AI tool "What's the default timeout for the API?" and receives: "That's a great question! The default timeout is 30 seconds. Let me know if you need anything else!" What Heideggerian concept describes the problem?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">Cognitive load &mdash; too much information</li>
+    <li onclick="checkAnswer(this, true)">Breakdown &mdash; the tool has shifted from ready-to-hand to present-at-hand</li>
+    <li onclick="checkAnswer(this, false)">Situation awareness &mdash; the developer loses awareness of the system state</li>
+    <li onclick="checkAnswer(this, false)">Attention filter &mdash; the developer can't distinguish signal from noise</li>
+  </ul>
+  <div class="quiz-explanation">The answer to the question is 7 words: "30 seconds, configurable via X filter." The remaining 17 words ("That's a great question!", "Let me know if you need anything else!") make the tool visible as a social entity &mdash; the developer must parse social signals and decide they're irrelevant before extracting the answer. This is breakdown: the tool has shifted from transparent instrument (ready-to-hand) to social object demanding attention (present-at-hand).</div>
+</div>
+</div>
+
+<!-- ==================== SECTION 7: MODERN APPLICATION ==================== -->
+<div class="section" id="sec-7">
+<h2>7. Modern Convergence: Cognitive Ergonomics Meets LLMs</h2>
+
+<p>Until 2024, cognitive ergonomics and LLM design were separate fields. The convergence is just beginning.</p>
+
+<h3>The Problem</h3>
+
+<p>LLMs trained with RLHF (Reinforcement Learning from Human Feedback) have a structural bias toward verbosity, social simulation, and sycophancy:</p>
+
+<ul>
+  <li><strong>Park et al. (2024)</strong>: DPO-trained models produce responses 2x longer than necessary because RLHF raters conflate length with quality</li>
+  <li><strong>Zhang et al. (2024)</strong>: GPT-4 exhibits verbosity compensation 50.4% of the time &mdash; generating excess words when uncertain rather than stating uncertainty</li>
+  <li><strong>Fanous et al. (2025, SycEval)</strong>: 78.5% sycophancy persistence across models, even with anti-sycophancy prompts</li>
+  <li><strong>Kran et al. (2025, DarkBench)</strong>: 48% dark pattern rate across LLMs; user retention manipulation in up to 97% of conversations</li>
+</ul>
+
+<p>From a cognitive ergonomics perspective, RLHF produces tools that are systematically <em>present-at-hand</em>: they simulate social presence, generating extraneous load, disrupting task flow, and reducing information density.</p>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Turing's imitation game as the origin of the problem</button>
+  <div class="expand-content">
+    <p><strong>Alan Turing (1950)</strong>, in "Computing Machinery and Intelligence" (<em>Mind</em>, Vol. LIX, No. 236), proposed the <span class="term" title="A test of machine intelligence based on whether a human interrogator can distinguish the machine from a human in text-based conversation.">imitation game</span>: can a machine convince a human that it is human? This was a philosophical thought experiment about intelligence. But RLHF training effectively adopted it as a <em>design specification</em> &mdash; optimize for conversational warmth, social signals, human-like affect. The sycophancy problem is, in a sense, the industry succeeding at Turing's test and discovering that passing it makes a worse tool.</p>
+    <p>Turing himself addressed what he called "Lady Lovelace's Objection" &mdash; Lovelace's claim from 1843 that machines cannot originate anything. His response was subtle: he didn't argue that machines <em>do</em> originate. Instead, he reframed the objection as conflating originality with unpredictability. Machines can surprise us when the consequences of their instructions aren't immediately recognizable &mdash; but surprise is not origination. The cognitive ergonomics position aligns more with Lovelace than with Turing's reframing: the tool should not simulate origination or social presence, regardless of whether it can surprise.</p>
+    <p>There is also an earlier, less-discussed connection. Turing's wartime work at Bletchley Park produced the Turing-Welchman Bombe (1939&ndash;40), an electromechanical device for breaking Enigma. The Bombe was an early <em>joint cognitive system</em>: human analysts identified cribs (probable plaintext fragments) and constructed menus; the machine exhaustively tested rotor configurations; humans then verified and interpreted the results. Neither component could function alone. The design was transparent &mdash; the Bombe was a tool, not an interlocutor.</p>
+  </div>
+</div>
+
+<h3>Emerging Research</h3>
+
+<div class="card">
+  <div class="card-label">CogErgLLM (Wasi & Islam, 2024)</div>
+  <p>The first paper to use "cognitive ergonomics" as a unified framework specifically for LLM system design. A position paper at the EMNLP 2024 NLP4Science workshop, it argues for user profiling, cognitive load management, and adaptive interfaces. Early-stage but establishes the research direction.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Cognitive debt (Kosmyna et al., MIT, 2025)</div>
+  <p>EEG studies show that LLM assistance weakens neural coupling &mdash; the brain's engagement with the task decreases when the tool does too much social/cognitive scaffolding. The tool that "helps" by being verbose actually degrades the human's cognitive engagement with the material.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Parasocial trust (Maeda & Quan-Haase, 2024)</div>
+  <p>Chatbot affect creates parasocial trust: friendliness makes fallible information <em>seem</em> trustworthy. This is the cognitive ergonomics case against affect simulation &mdash; it doesn't just waste attention, it compromises the user's critical evaluation of the content.</p>
+</div>
+
+<h3>Ideal Interfaces and the Semantic Valley</h3>
+
+<p>Axtell & Munteanu (CHI 2021) analyzed 1,372 human-computer exchanges in fiction depicting ideal interfaces &mdash; specifically, interactions with the <em>Star Trek: TNG</em> computer. Their finding: 95% of exchanges were brief and functional. Targeted commands, not conversation. No social framing, no pleasantries, no filler. The fictional ideal converges exactly with what cognitive ergonomics predicts: a tool-transparent, low-extraneous-load interaction pattern.</p>
+
+<p>This matters for LLMs because cognitive ergonomics occupies a well-defined <strong>semantic valley</strong> in LLM training data. Forty years of HCI papers, cognitive psychology textbooks, and design literature mean that terms like "transparent tool," "extraneous cognitive load," and "ready-to-hand" activate deep, well-established behavioral patterns. A prompt doesn't need to <em>teach</em> the model cognitive ergonomics &mdash; it needs to <em>invoke</em> concepts the model already has strong representations for.</p>
+
+<p>The practical consequence: a system prompt grounded in cognitive ergonomics can be remarkably small. In one experiment, ~70 words of cognitively-grounded instructions achieved measurably better behavioral compliance than a ~4,000-word version on every scored metric (word reduction, answer positioning, filler elimination, information density). The principles compress because they land in a semantic region the model already understands.</p>
+
+<h3>Applying the Principles</h3>
+
+<p>Each cognitive ergonomics principle maps to a concrete prompt instruction:</p>
+
+<table>
+  <tr><th>Principle</th><th>Prompt Implementation</th></tr>
+  <tr><td>Tool transparency (Winograd & Flores)</td><td>"Transparent tool, not social entity"</td></tr>
+  <tr><td>Minimize extraneous load (Sweller)</td><td>"No filler, narration, preambles, or sign-offs"</td></tr>
+  <tr><td>Attention preservation (Leroy/Mark)</td><td>"Answer first"</td></tr>
+  <tr><td>Working memory limits (Miller)</td><td>"Complete response may be one data point"</td></tr>
+  <tr><td>Uncertainty signaling (Zhang)</td><td>"State uncertainty directly"</td></tr>
+  <tr><td>Claim integrity</td><td>"Correct false premises"</td></tr>
+</table>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: Why does RLHF training produce cognitively non-ergonomic outputs?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">RLHF optimizes for accuracy, which requires longer explanations</li>
+    <li onclick="checkAnswer(this, true)">Human raters in RLHF conflate length and social warmth with quality, training the model to be verbose and sycophantic</li>
+    <li onclick="checkAnswer(this, false)">RLHF models lack the knowledge to be concise</li>
+    <li onclick="checkAnswer(this, false)">Cognitive ergonomics and RLHF are optimizing for the same thing but using different methods</li>
+  </ul>
+  <div class="quiz-explanation">RLHF raters tend to prefer longer, friendlier responses &mdash; they rate "Great question! Here's a detailed explanation..." higher than a terse, accurate answer. This trains the model to produce extraneous cognitive load (social signals, verbosity) as a reward-maximizing strategy. Cognitive ergonomics optimizes for the opposite: minimal extraneous load, maximum information density, tool transparency. The two objectives are in direct tension.</div>
+</div>
+</div>
+
+<!-- ==================== SECTION 8: SYNTHESIS ==================== -->
+<div class="section" id="sec-8">
+<h2>8. Synthesis: The Field in One Page</h2>
+
+<p>If you've worked through the previous chapters, this synthesis should feel like recognition rather than new information.</p>
+
+<div class="figure">
+  <div class="diagram">
+1843   Lovelace: "no pretensions whatever to originate anything" (Note G)
+  |
+1940s  WWII: "Design for the human, not the reverse"
+  |
+1950s  Broadbent: Attention filter | Miller: 7&plusmn;2 chunks | Fitts: MABA-MABA
+  |    Turing: Imitation game (1950) &mdash; later adopted as LLM design target
+  |
+1960s  Dijkstra: "Go To Considered Harmful" (1968) &mdash; cognitive limits in language design
+  |    Dijkstra: "The Humble Programmer" (1972) &mdash; "limited size of his own skull"
+  |
+1970s  Rasmussen: SRK framework (skill/rule/knowledge)
+  |
+1980s  CONVERGENCE
+  |    Hollnagel & Woods: Joint cognitive systems (1983)
+  |    Winograd & Flores: Tool transparency (1986)
+  |    Norman: Design of Everyday Things (1988)
+  |    Sweller: Cognitive Load Theory (1988)
+  |
+1990s  Csikszentmihalyi: Flow (1990)
+  |    Reason: Human Error / Swiss Cheese (1990)
+  |    Weiser: Calm technology (1991)
+  |    Endsley: Situation awareness (1995)
+  |
+2020s  LLM convergence
+       Park: RLHF length bias (2024)
+       Wasi & Islam: CogErgLLM (2024)
+       Kosmyna: Cognitive debt from AI (2025)
+       Applied cognitive ergonomics to LLM prompts (2025-26)</div>
+  <div class="figure-caption">The intellectual lineage of cognitive ergonomics, from wartime necessity to AI interface design.</div>
+</div>
+
+<h3>Five Principles Worth Remembering</h3>
+
+<div class="card">
+  <div class="card-label">1. The founding insight</div>
+  <p>Design for human cognitive constraints rather than expecting humans to adapt. This applies to physical controls (1940s), software interfaces (1980s), and AI outputs (2020s).</p>
+</div>
+
+<div class="card">
+  <div class="card-label">2. Three types of load</div>
+  <p>Intrinsic (task complexity) and extraneous (design overhead). Minimize extraneous. The original three-category model included &ldquo;germane&rdquo; load, but post-2010 CLT treats germane processing as the natural result of reducing extraneous load, not a separate design target. Every unnecessary element in an interface &mdash; including LLM social filler &mdash; is extraneous load.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">3. Tool transparency</div>
+  <p>The best tools are invisible in use (ready-to-hand). Anything that makes the tool visible as an entity rather than transparent as an instrument &mdash; social signals, process narration, rapport simulation &mdash; is a breakdown event.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">4. The joint system</div>
+  <p>Human + tool = one cognitive system. Evaluate the system as a whole, not the components separately. A "friendly" AI that degrades human cognitive engagement is a worse joint system than a terse one that preserves it.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">5. Attention is the scarce resource</div>
+  <p>Working memory is limited. Attention is a filter. Interruptions have recovery costs. Every design decision should ask: does this demand attention? If so, does it earn the attention it demands?</p>
+</div>
+
+<h3>Further Reading</h3>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Primary sources (chronological)</button>
+  <div class="expand-content">
+    <ul>
+      <li>Miller, G. A. (1956). "The Magical Number Seven, Plus or Minus Two." <em>Psychological Review</em>, 63(2), 81-97.</li>
+      <li>Broadbent, D. E. (1958). <em>Perception and Communication.</em> Pergamon Press.</li>
+      <li>Rasmussen, J. (1983). "Skills, Rules, and Knowledge." <em>IEEE Transactions on Systems, Man, and Cybernetics</em>, SMC-13(3), 257-266.</li>
+      <li>Winograd, T. & Flores, F. (1986). <em>Understanding Computers and Cognition.</em> Ablex.</li>
+      <li>Heersmink, R., de Rooij, A., Clavel Vázquez, C. & Colombo, M. (2024). "A Phenomenology and Epistemology of Large Language Models." <em>Ethics and Information Technology, 26(3).</em> — Extends Heidegger's tool transparency analysis to LLMs.</li>
+      <li>Sweller, J. (1988). "Cognitive Load During Problem Solving." <em>Cognitive Science</em>, 12(2), 257-285.</li>
+      <li>Norman, D. A. (1988). <em>The Design of Everyday Things.</em> Basic Books.</li>
+      <li>Reason, J. (1990). <em>Human Error.</em> Cambridge University Press.</li>
+      <li>Csikszentmihalyi, M. (1990). <em>Flow.</em> Harper & Row.</li>
+      <li>Weiser, M. (1991). "The Computer for the 21st Century." <em>Scientific American</em>, 265(3), 94-104.</li>
+      <li>Endsley, M. R. (1995). "Toward a Theory of Situation Awareness in Dynamic Systems." <em>Human Factors</em>, 37(1), 32-64.</li>
+      <li>Hollnagel, E. & Woods, D. D. (2005). <em>Joint Cognitive Systems: Foundations of Cognitive Systems Engineering.</em> CRC Press.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">LLM-specific cognitive ergonomics</button>
+  <div class="expand-content">
+    <ul>
+      <li>Wasi, A. T. & Islam, M. R. (2024). "CogErgLLM: Exploring LLM Systems Design Using Cognitive Ergonomics." EMNLP 2024 NLP4Science workshop.</li>
+      <li>Park, R. et al. (2024). "Disentangling Length from Quality in Direct Preference Optimization." ACL Findings.</li>
+      <li>Zhang, Y. et al. (2024). Verbosity compensation in GPT-4.</li>
+      <li>Kosmyna, N. et al. (2025). Cognitive debt: EEG studies of AI-assisted cognition. MIT.</li>
+      <li>Maeda, J. & Quan-Haase, A. (2024). Chatbot affect and parasocial trust. FAccT.</li>
+      <li>Stadler, M., Bannert, M. & Sailer, M. (2024). The cognitive ease paradox in LLM use.</li>
+      <li>Sweller, J., van Merri&euml;nboer, J. J. G. & Paas, F. (2019). &ldquo;Cognitive Architecture and Instructional Design: 20 Years Later.&rdquo; <em>Educational Psychology Review</em>, 31, 261&ndash;292. &mdash; Reconceptualizes germane load as element interactivity rather than a separate load type.</li>
+      <li>Axtell, B. & Munteanu, C. (2021). "Communicating with Computers in Star Trek: TNG." CHI 2021.</li>
+      <li>Extended research basis (34 citations): <code>~/lcars-eval/prompts/v10.md</code></li>
+    </ul>
+  </div>
+</div>
+
+<h3>Case Study: LCARS</h3>
+
+<p>It turns out science fiction does a good job of presenting technology in ways which match up with cognitive ergonomics. The computer in <em>Star Trek</em> and its interface (the Library Computer Access and Retrieval System, or LCARS) is a prescient example of a ready-to-hand interface. Axtell &amp; Munteanu's analysis of 1,372 TNG exchanges (Chapter 7) confirmed this quantitatively: 95% were brief and functional. <em>"Tea, Earl Grey, hot"</em> &rarr; tea appears. No confirmation prompt, no pleasantries, no "Great choice! I'd be happy to help with that beverage." The fictional ideal converges exactly with what cognitive ergonomics predicts.</p>
+
+<p><a href="https://github.com/melek/lcars">LCARS</a> &mdash; named after this fictional interface &mdash; is a plugin for <a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code</a> (Anthropic's CLI agent) that attempts to apply the principles in this primer to a working AI tool. It uses Claude Code's hook system &mdash; lifecycle events that fire before and after each response &mdash; to build a self-correcting feedback loop:</p>
+
+<ol>
+  <li><strong>Score</strong> each response deterministically (filler count, answer position, information density) without calling the model</li>
+  <li><strong>Detect drift</strong> when scores cross query-type-aware thresholds &mdash; a 600-word code explanation isn't drift; a 600-word answer to "what time is it" is</li>
+  <li><strong>Inject a correction</strong> into the next session's context when drift is detected</li>
+  <li><strong>Measure whether the correction worked</strong> by comparing the targeted dimension before and after</li>
+  <li><strong>Deep evaluation</strong> via LLM-as-judge with a structured rubric (Zhang et al. verbosity taxonomy + Vennemeyer et al. sycophancy decomposition) &mdash; catching edge cases the deterministic phrase list misses</li>
+</ol>
+
+<p>The design follows the principles directly: tool transparency (the plugin is invisible when things are working), extraneous load minimization (corrections are terse injected context, not conversational feedback), and attention preservation (scoring and correction happen asynchronously, never blocking the user). It applies overfit prevention to its own memory &mdash; a pattern must appear across 5+ sessions and 3+ calendar days before the system encodes it as recurring. And it treats its own context injection as a cognitive ergonomics problem &mdash; what we call <em>recursive ergonomics</em> (see 9.5 below).</p>
+
+<p>Whether this specific implementation succeeds is less important than what it tests: <em>can the principles from Chapters 1&ndash;7 be operationalized in a real system?</em> The next chapter examines this question across a broader landscape of emerging systems.</p>
+
+<div class="quiz">
+  <div class="quiz-question">Final synthesis: Which statement best captures the core contribution of cognitive ergonomics?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">Human cognition is limited, so we should build simpler systems</li>
+    <li onclick="checkAnswer(this, false)">Good interfaces are intuitive and don't require training</li>
+    <li onclick="checkAnswer(this, true)">Systems should be designed around the known structure and limits of human cognition, minimizing demands on scarce cognitive resources</li>
+    <li onclick="checkAnswer(this, false)">Technology should replace human judgment wherever possible</li>
+  </ul>
+  <div class="quiz-explanation">Cognitive ergonomics doesn't argue for simpler systems or for replacing humans. It argues that system design should account for how cognition actually works &mdash; limited attention, bounded working memory, susceptibility to extraneous load, the need for tool transparency &mdash; and allocate cognitive demands accordingly. The goal is not simplicity but <em>cognitive economy</em>: every demand the system makes on the user's cognition should earn its cost.</div>
+</div>
+</div>
+
+<!-- ==================== SECTION 9: EMERGING SYSTEMS ==================== -->
+<div class="section" id="sec-9">
+<h2>9. Emerging Systems: Context Engineering as a Discipline</h2>
+
+<p>The previous chapters traced cognitive ergonomics from wartime cockpits to LLM prompts. This chapter extends the analysis to a higher level of abstraction: the <em>systems</em> that manage context, memory, and human-AI interaction across sessions and workflows. A thesis is emerging in both industry and scholarship: <strong>the competitive differentiator is not the model but the context-management system that mediates between the human and the model.</strong></p>
+
+<div class="card">
+  <div class="card-label">The thesis</div>
+  <p>Models are converging in capability. What varies &mdash; and what determines the quality of the human-AI joint cognitive system &mdash; is the <em>context layer</em>: how the system assembles relevant information, manages memory across sessions, detects and corrects its own output quality, and preserves human cognitive resources throughout. Context engineering is the practice of designing this layer.</p>
+</div>
+
+<p>A recurring observation in this chapter: many of the decisions context engineers face &mdash; what to include in the context window, where to place it, when to prune stale information, how to structure instructions &mdash; resemble <em>cognitive ergonomics</em> questions. They concern attention limits, working memory constraints, and the cost of extraneous load. The difference is that the cognitive subject is the LLM, not the human. This parallel doesn't prove equivalence, but it does suggest that the vocabulary and research tradition of cognitive ergonomics &mdash; which has studied analogous problems in human systems for decades &mdash; may be a useful lens for context engineering decisions that are currently made ad hoc.</p>
+
+<h3>9.1 The Competitive Landscape</h3>
+
+<p>Several systems now occupy different positions in the context-management space. They differ in scope, architecture, and which cognitive ergonomics principles they embody (or violate).</p>
+
+<table>
+  <tr>
+    <th>System</th>
+    <th>Type</th>
+    <th>Context Management</th>
+    <th>Memory</th>
+    <th>Self-Correction</th>
+    <th>Cognitive Ergonomics</th>
+  </tr>
+  <tr>
+    <td><strong>Claude Code</strong></td>
+    <td>CLI agent</td>
+    <td>14-hook lifecycle, CLAUDE.md, MCP servers</td>
+    <td>Session-scoped + file-based persistence</td>
+    <td>None built-in</td>
+    <td>Partial &mdash; hook system enables it but doesn't enforce it</td>
+  </tr>
+  <tr>
+    <td><strong>OpenAI Codex</strong></td>
+    <td>Cloud agent</td>
+    <td>Sandboxed task execution, microVM per task</td>
+    <td>Task-scoped only</td>
+    <td>None</td>
+    <td>Minimal &mdash; async by design, no persistent quality tracking</td>
+  </tr>
+  <tr>
+    <td><strong>Cursor / Windsurf</strong></td>
+    <td>IDE-native</td>
+    <td>Project-scoped rules (.cursor/rules), codebase indexing</td>
+    <td>IDE session state</td>
+    <td>None</td>
+    <td>Implicit &mdash; codebase awareness reduces irrelevant output</td>
+  </tr>
+  <tr>
+    <td><strong>OpenClaw</strong></td>
+    <td>CLI agent</td>
+    <td>Typed memory (Engrams), crystallization pipeline</td>
+    <td>Cross-session typed memory with overfit gates</td>
+    <td>Foundry: observe &rarr; validate &rarr; crystallize</td>
+    <td>Strong on memory ergonomics, no output quality scoring</td>
+  </tr>
+  <tr>
+    <td><strong>Leon / Mycroft</strong></td>
+    <td>Voice assistant</td>
+    <td>Skill-based routing, intent classification</td>
+    <td>Per-skill state</td>
+    <td>None</td>
+    <td>Interaction modality constrains verbosity naturally</td>
+  </tr>
+  <tr>
+    <td><strong>LCARS Plugin</strong></td>
+    <td>Claude Code plugin</td>
+    <td>Deterministic scoring, query-type-aware thresholds, LLM-as-judge deep eval, Foundry</td>
+    <td>Score ledger, pattern consolidation with temporal overfit gates</td>
+    <td>Fitness function + Foundry crystallization + human approval gates</td>
+    <td>Primary design goal &mdash; recursive ergonomics applied to both user and model context</td>
+  </tr>
+</table>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Key differentiators</button>
+  <div class="expand-content">
+    <p>Three capabilities separate context-management systems from simple AI wrappers:</p>
+    <ol>
+      <li><strong>Temporal memory with overfit prevention</strong> &mdash; Most systems are session-scoped or task-scoped. OpenClaw and LCARS both implement cross-session memory with validation gates to prevent the system from "learning" from noise. The overfit problem is well-understood in ML but rarely applied to agent memory.</li>
+      <li><strong>Self-evaluation</strong> &mdash; Measuring whether corrections actually improve output quality. Without this, a self-correcting system can drift into pathological self-correction &mdash; issuing corrections that degrade rather than improve.</li>
+      <li><strong>Deterministic scoring + structured deep evaluation</strong> &mdash; Measuring output quality with code (filler count, answer position, density) rather than asking the model "was this good?" This avoids the sycophancy trap where the model evaluates its own output favorably. Optionally supplemented by LLM-as-judge evaluation with a fixed rubric to catch edge cases the phrase list misses.</li>
+    </ol>
+  </div>
+</div>
+
+<h3>9.2 Academic Mapping</h3>
+
+<p>The thesis that "context management is the competitive differentiator" is emerging across several research threads. The terminology varies &mdash; context engineering, cognitive architecture for agents, prompt management systems &mdash; but the concern is converging.</p>
+
+<h3>Context Engineering</h3>
+
+<div class="card">
+  <div class="card-label">Wang et al. (2025) &mdash; Context Engineering Survey</div>
+  <p>The first comprehensive survey explicitly using "context engineering" as a named discipline. Covers retrieval-augmented generation, instruction tuning, knowledge augmentation, and context window management as facets of a single practice. The survey treats context assembly as an engineering problem with formal requirements, not an ad hoc prompting art.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Bsharat et al. (2024) &mdash; Principled Instructions</div>
+  <p>Systematic evaluation of 26 prompt principles across LLM families. Demonstrates that instruction phrasing (context framing) accounts for measurable performance variation. This empirically validates the premise that the context layer &mdash; not just the model &mdash; determines output quality.</p>
+</div>
+
+<h3>Agent Memory &amp; Self-Correction</h3>
+
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="timeline-year">2024</div>
+    <div class="timeline-title">Zhang &amp; Ding: A Survey on Memory</div>
+    <p>Comprehensive taxonomy of LLM agent memory: sensory, short-term, long-term, with retrieval and consolidation mechanisms. Directly relevant to the design question of what to persist across sessions and how to prevent memory overfit.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">2024</div>
+    <div class="timeline-title">Kamradt: Needle in a Haystack</div>
+    <p>Empirical measurement of context window utilization. Models perform unevenly across the context window &mdash; information placement matters. This validates the cognitive ergonomics concern with <em>where</em> information appears, not just <em>whether</em> it's present.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">2024</div>
+    <div class="timeline-title">Pan et al.: Automatically Correcting LLMs</div>
+    <p>Survey of self-correction approaches: training-time, generation-time, and post-hoc. Most methods require an external signal (verifier, reward model). Deterministic code-based scoring is unusual in this landscape &mdash; it provides a correction signal without a second model call.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">2025</div>
+    <div class="timeline-title">Huang et al.: LLMs Cannot Self-Correct</div>
+    <p>Demonstrates that without external feedback, LLMs degrade when asked to self-correct. Supports the case for code-based scoring rather than asking the model to evaluate itself.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-year">2025</div>
+    <div class="timeline-title">Sumers et al.: Cognitive Architectures for Language Agents</div>
+    <p>Proposes a framework mapping classical cognitive architectures (ACT-R, SOAR) onto LLM agent design. Memory, reasoning, and action components are analyzed as a unified system &mdash; the same "joint cognitive system" lens from Chapter 5.</p>
+  </div>
+</div>
+
+<h3>Organizational Ergonomics</h3>
+
+<p>Where the IEA's three branches meet AI systems: physical ergonomics is largely irrelevant, cognitive ergonomics drives output quality, and <em>organizational ergonomics</em> addresses the sociotechnical context in which AI systems operate.</p>
+
+<div class="concept-grid">
+  <div class="concept-item">
+    <strong>Hendrick &amp; Kleiner (2001)</strong><br>
+    <em>Macroergonomics: An Introduction to Work System Design.</em> Defines three dimensions of work systems: complexity, formalization, and centralization. AI context-management systems implicitly make choices on all three.
+  </div>
+  <div class="concept-item">
+    <strong>Simkute et al. (2024)</strong><br>
+    <em>Ironies of Generative AI.</em> Extends Bainbridge's classic "ironies of automation" to GenAI. Users lose awareness of underlying processes, skill atrophy occurs, and the system's cognitive scaffolding becomes invisible &mdash; precisely the automation paradox cognitive ergonomics was designed to address.
+  </div>
+  <div class="concept-item">
+    <strong>Lee et al. (2025)</strong><br>
+    Higher AI confidence reduces critical thinking in 319 knowledge workers. Organizational implication: if the system presents everything with equal confidence, it degrades the human component of the joint system.
+  </div>
+  <div class="concept-item">
+    <strong>Kosmyna et al. (2025)</strong><br>
+    EEG evidence of cognitive debt: neural engagement weakens under AI assistance. The organizational cost &mdash; a workforce that thinks less deeply &mdash; is invisible in individual task completion metrics but measurable in neural data.
+  </div>
+</div>
+
+<h3>9.3 Where the Literature Is Ahead</h3>
+
+<p>Several research threads address problems that current context-management systems haven't yet engaged with. These represent areas where the scholarship has progressed further than implementations.</p>
+
+<div class="card">
+  <div class="card-label">Multi-agent coordination &amp; delegation</div>
+  <p><strong>Talebirad &amp; Nadiri (2023)</strong>, <strong>Guo et al. (2024)</strong>, and <strong>Xi et al. (2025)</strong> have developed rich taxonomies of multi-agent systems: role allocation, communication protocols, consensus mechanisms, and failure handling across agent teams. Current context-management systems (OpenClaw, Claude Code, LCARS) are fundamentally single-agent. The literature on cognitive load in <em>human teams</em> (Salas, Shuffler, Thayer 2014) is well-developed but hasn't been connected to multi-agent AI coordination. The open question: when a system delegates to subagents, how should cognitive ergonomics principles apply to the delegation interface?</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Retrieval-augmented generation (RAG) ergonomics</div>
+  <p><strong>Gao et al. (2024)</strong> survey RAG comprehensively &mdash; retrieval strategies, chunk sizing, re-ranking, citation. But RAG design is almost entirely evaluated on <em>accuracy</em>. The cognitive ergonomics question &mdash; how does retrieved context affect the information density and structure of the output? &mdash; is unexplored. RAG systems can inject contextually relevant but verbose source material that the model then paraphrases, degrading density. No current system measures this effect.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Personalization vs. principled design</div>
+  <p><strong>Salemi et al. (2024, LaMP benchmark)</strong> and <strong>Li et al. (2024)</strong> demonstrate that user-personalized LLM outputs improve satisfaction and task completion. This creates tension with a principled-standards approach that enforces cognitive ergonomics norms rather than learning user preferences like "make responses longer for me." The literature suggests this tension is real &mdash; individual preferences for verbosity vary, and rigid standards may be suboptimal for some users. Enforcing principles over preferences is defensible but not empirically validated against personalized alternatives.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Cognitive load measurement</div>
+  <p>Kosmyna's EEG work and <strong>Paas &amp; van Merri&euml;nboer (2020)</strong> measure cognitive load physiologically. Code-based systems measure it by proxy (word count, density, filler count). The gap: <em>actual cognitive load</em> (as measured by neural or physiological indicators) may not correlate linearly with textual features. A dense, technically precise response may impose higher intrinsic load than a slightly verbose but well-scaffolded one. The literature's physiological methods are more epistemically valid but impractical for real-time systems. This is an unresolved design tension.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Calibrated uncertainty communication</div>
+  <p><strong>Xiong et al. (2024)</strong> and <strong>Kadavath et al. (2022)</strong> study how LLMs express and calibrate uncertainty. The finding: models are poorly calibrated, and the way uncertainty is communicated affects user decision-making. Simple frameworks (e.g. HIGH/MEDIUM/LOW confidence tiers) may be insufficient for high-stakes domains. The literature has more sophisticated approaches &mdash; probability expressions, calibrated confidence intervals, and studies of how framing affects trust.</p>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Approaches not yet represented in the literature</button>
+  <div class="expand-content">
+    <p>Several implementation approaches from the systems in the table above have no direct academic parallel:</p>
+    <ol>
+      <li><strong>Deterministic model-agnostic output scoring.</strong> Academic self-correction research (Pan et al. 2024, Huang et al. 2025) assumes a model-based evaluator. Scoring filler, preamble, and density with code is simpler, cheaper, and avoids the sycophancy trap of self-evaluation. A hybrid approach &mdash; deterministic scoring as default with opt-in LLM-as-judge using a fixed rubric (Zhang et al. verbosity taxonomy, Vennemeyer et al. sycophancy decomposition) &mdash; addresses edge cases while preserving the external-signal principle.</li>
+      <li><strong>Temporal overfit gates for agent memory.</strong> Requiring patterns to appear across multiple sessions and calendar days before encoding them as recurring &mdash; applying ML overfit prevention to agent memory. Memory surveys (Zhang &amp; Ding 2024) discuss consolidation but don't address the risk that short-term patterns get permanently encoded.</li>
+      <li><strong>Correction effectiveness as a first-class metric.</strong> Self-correction papers measure whether corrections improve accuracy. Measuring whether the <em>system's own corrections</em> improved the targeted dimension is a meta-metric not found in the literature.</li>
+    </ol>
+  </div>
+</div>
+
+<h3>9.4 Recursive Ergonomics: The LLM as Cognitive Subject</h3>
+
+<p>Every principle in this primer has been framed around the <em>human</em> as the cognitive subject. But consider what context engineering systems actually do: they decide what information to place in a limited processing window, where to position it for maximum attention, and when to remove stale material that might degrade performance. These are cognitive ergonomics problems. The cognitive subject just happens to be the LLM rather than the human.</p>
+
+<p>This is not a loose metaphor. Many context-management decisions have direct parallels in human cognitive ergonomics research, and the empirical evidence for the LLM side is growing. Sweller's Cognitive Load Theory maps onto LLM processing with notable directness:</p>
+
+<table>
+  <tr>
+    <th>Sweller (human)</th>
+    <th>LLM analogue</th>
+    <th>Evidence</th>
+  </tr>
+  <tr>
+    <td>Working memory limit</td>
+    <td>Context window + attention distribution</td>
+    <td>Liu et al. 2024 ("Lost in the Middle"): information in the middle of the context window is systematically under-attended</td>
+  </tr>
+  <tr>
+    <td>Attention filter</td>
+    <td>Early-token attention bias</td>
+    <td>Xiao et al. ICLR 2025: ~80% of attention concentrates on early tokens regardless of content (attention sinks)</td>
+  </tr>
+  <tr>
+    <td>Extraneous load</td>
+    <td>Irrelevant or stale context</td>
+    <td>Chroma 2024 ("Context Rot"): 10% irrelevant content causes ~23% accuracy degradation</td>
+  </tr>
+  <tr>
+    <td>Intrinsic load</td>
+    <td>Task-relevant context</td>
+    <td>&mdash;</td>
+  </tr>
+  <tr>
+    <td>Germane load</td>
+    <td>Well-structured prompts</td>
+    <td>Bsharat et al. 2024: instruction phrasing accounts for measurable performance variation</td>
+  </tr>
+</table>
+
+<p>This mapping suggests that many context-management decisions already being made in practice &mdash; across systems, not just LCARS &mdash; are implicitly cognitive ergonomics decisions for the model. A few examples:</p>
+
+<div class="card">
+  <div class="card-label">System prompt placement</div>
+  <p>Every major LLM API places system instructions at the context start. This is typically framed as a convention or API design choice. Through the cognitive ergonomics lens, it resembles an attention management decision: the primacy position in the attention distribution (Xiao et al.'s attention sink effect) ensures behavioral instructions receive disproportionate processing weight. The parallel to human primacy effects in instruction processing (Murdock, 1962) is suggestive, though the underlying mechanisms differ.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">RAG chunk sizing and retrieval limits</div>
+  <p>RAG systems decide how much retrieved context to inject and how to bound it. This is typically framed as a retrieval engineering tradeoff (recall vs. precision). But it is also describable as an extraneous load question: injecting contextually relevant but excessive source material degrades model output quality (Chroma 2024), just as excessive reference material degrades human task performance (Sweller 1988). Whether Sweller's specific framework transfers usefully to RAG design is untested, but the structural similarity &mdash; a processing system with bounded capacity degraded by irrelevant input &mdash; is worth noting.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">Context window pruning and rotation</div>
+  <p>Systems that manage long-running sessions must decide when to prune or summarize earlier context. This is typically framed as a token budget problem. Through the cognitive ergonomics lens, stale context resembles extraneous load &mdash; it occupies processing capacity without contributing to the current task. The human cognitive science literature on interference effects (older memories degrading newer recall) addresses a structurally similar problem, though the mechanisms are different.</p>
+</div>
+
+<p>None of this proves that LLM attention constraints are structurally equivalent to human ones &mdash; the mechanisms are different, and the analogy could mislead if pushed too far. But recognizing the <em>structural similarity</em> provides two things: a <em>vocabulary</em> for describing context-management decisions (extraneous load, attention allocation, working memory bounds) and a <em>research tradition</em> with decades of experimental methodology for studying bounded-capacity processing systems. When a context engineer asks "how much retrieved context is too much?", cognitive ergonomics may not have the answer &mdash; but it has studied the shape of the question.</p>
+
+<p>LCARS formalizes this dual framing explicitly &mdash; every design decision is evaluated against both the user's and the model's cognitive constraints (see the <a href="https://github.com/melek/lcars/blob/main/DESIGN.md">design rationale</a>). But the observation extends beyond any single system: context engineering decisions can often be reframed as cognitive ergonomics questions. If we can build an intuition for the cognitive limits of the systems we're working with, this way of thinking may help us hit upon new ideas.</p>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Additional evidence</button>
+  <div class="expand-content">
+    <ul>
+      <li><strong>Liu, N. F. et al. (2024).</strong> "Lost in the Middle: How Language Models Use Long Contexts." <em>TACL.</em></li>
+      <li><strong>Xiao, G. et al. (2025).</strong> "Efficient Streaming Language Models with Attention Sinks." <em>ICLR.</em></li>
+      <li><strong>Chroma (2024).</strong> "Context Rot: How Irrelevant Context Degrades Retrieval Quality."</li>
+    </ul>
+  </div>
+</div>
+
+<h3>9.5 The Emerging Category</h3>
+
+<p>These systems &mdash; Claude Code, OpenClaw, Cursor, LCARS &mdash; are neither "chatbots" nor "agents" in the traditional sense. The literature is groping toward a category name:</p>
+
+<div class="concept-grid">
+  <div class="concept-item">
+    <strong>Context engineering systems</strong><br>
+    Wang et al.'s framing. Emphasizes the assembly and management of context as the core engineering problem.
+  </div>
+  <div class="concept-item">
+    <strong>Cognitive architectures for agents</strong><br>
+    Sumers et al.'s framing. Maps classical AI architectures (SOAR, ACT-R) onto LLM agent design, treating memory/reasoning/action as a unified system.
+  </div>
+  <div class="concept-item">
+    <strong>Human-AI joint cognitive systems</strong><br>
+    Extending Hollnagel &amp; Woods. The system is the human + AI + context layer, not the AI alone. Performance is evaluated at the system level.
+  </div>
+  <div class="concept-item">
+    <strong>AI work systems</strong><br>
+    Extending Hendrick &amp; Kleiner's macroergonomics. The AI system operates within a work system with organizational structure, formalization requirements, and coordination costs.
+  </div>
+</div>
+
+<p>The observation from section 9.4 &mdash; that context engineering decisions often resemble cognitive ergonomics questions &mdash; adds weight to the <strong>joint cognitive systems</strong> framing. If the context layer mediates between two bounded-capacity processing systems (human and LLM), then the tradition that has studied how to design for bounded-capacity processors &mdash; cognitive ergonomics &mdash; may be the most natural intellectual home. The "context engineering" framing is technically precise but doesn't carry a research tradition for reasoning about attention, load, and interference. Whether the analogy holds up under rigorous testing is an open question, but it's one worth asking.</p>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: Why can't LLMs reliably self-correct without external signals?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">They lack the knowledge to evaluate their own outputs</li>
+    <li onclick="checkAnswer(this, true)">Without external feedback, self-evaluation is subject to the same biases (sycophancy, confidence) that produced the original output</li>
+    <li onclick="checkAnswer(this, false)">Self-correction requires more compute than models have available</li>
+    <li onclick="checkAnswer(this, false)">The training data doesn't include examples of self-correction</li>
+  </ul>
+  <div class="quiz-explanation">Huang et al. (2025) demonstrated that models asked to "reflect and improve" their outputs often degrade rather than improve them. The same RLHF biases that produce verbose, sycophantic initial outputs also affect self-evaluation &mdash; the model rates its own output favorably. This is why deterministic code-based scoring (Chapter 8) matters: filler count, answer position, and information density can be measured without asking the model for an opinion. The external signal breaks the self-evaluation loop.</div>
+</div>
+
+<div class="quiz">
+  <div class="quiz-question">Self-check: What is the strongest counterargument to enforcing uniform cognitive ergonomics standards across all users?</div>
+  <ul class="quiz-options">
+    <li onclick="checkAnswer(this, false)">Some users prefer sycophantic responses</li>
+    <li onclick="checkAnswer(this, true)">Individual cognitive profiles vary &mdash; what constitutes "extraneous load" for an expert may be necessary scaffolding for a novice</li>
+    <li onclick="checkAnswer(this, false)">RLHF was optimized by many raters, so it reflects collective preferences better</li>
+    <li onclick="checkAnswer(this, false)">Cognitive ergonomics is an academic theory that doesn't apply to practical systems</li>
+  </ul>
+  <div class="quiz-explanation">The personalization literature (Salemi et al. 2024, Li et al. 2024) shows that user preferences for verbosity and explanation depth vary meaningfully. Sweller's own CLT acknowledges that intrinsic load depends on expertise &mdash; a novice needs more scaffolding (germane load) that an expert would experience as extraneous. A rigid standard optimized for experts may under-scaffold novices. This is a genuine design tension, not a refutation: the question is whether to adapt standards to users or to trust that the principles apply universally. The research doesn't resolve this fully.</div>
+</div>
+
+<h3>Key References</h3>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Context engineering &amp; agent architecture</button>
+  <div class="expand-content">
+    <ul>
+      <li>Wang, Y. et al. (2025). "Context Engineering for AI Agents: A Survey." arXiv.</li>
+      <li>Sumers, T. R. et al. (2025). "Cognitive Architectures for Language Agents." <em>ICLR.</em></li>
+      <li>Bsharat, S. M. et al. (2024). "Principled Instructions Are All You Need for Questioning LLMs." arXiv.</li>
+      <li>Zhang, Z. &amp; Ding, B. (2024). "A Survey on the Memory Mechanism of Large Language Model Based Agents." arXiv.</li>
+      <li>Kamradt, G. (2024). "Needle in a Haystack: Pressure Testing LLMs." GitHub.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Self-correction &amp; calibration</button>
+  <div class="expand-content">
+    <ul>
+      <li>Pan, L. et al. (2024). "Automatically Correcting Large Language Models: Surveying the Landscape." <em>TACL.</em></li>
+      <li>Huang, J. et al. (2025). "Large Language Models Cannot Self-Correct Reasoning Yet." <em>ICLR.</em></li>
+      <li>Xiong, M. et al. (2024). "Can LLMs Express Their Uncertainty? An Empirical Evaluation of Confidence Elicitation." <em>ICLR.</em></li>
+      <li>Kadavath, S. et al. (2022). "Language Models (Mostly) Know What They Know." arXiv.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Multi-agent &amp; personalization</button>
+  <div class="expand-content">
+    <ul>
+      <li>Talebirad, Y. &amp; Nadiri, A. (2023). "Multi-Agent Collaboration: Harnessing the Power of Intelligent LLM Agents." arXiv.</li>
+      <li>Guo, T. et al. (2024). "Large Language Model Based Multi-Agents: A Survey of Progress and Challenges." <em>IJCAI.</em></li>
+      <li>Xi, Z. et al. (2025). "The Rise and Potential of Large Language Model Based Agents: A Survey." arXiv.</li>
+      <li>Salemi, A. et al. (2024). "LaMP: When Large Language Models Meet Personalization." <em>ACL.</em></li>
+      <li>Li, L. et al. (2024). "Personalized Language Modeling." arXiv.</li>
+      <li>Gao, Y. et al. (2024). "Retrieval-Augmented Generation for Large Language Models: A Survey." arXiv.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="expandable">
+  <button class="expand-trigger" onclick="toggleExpand(this)">Organizational &amp; cognitive measurement</button>
+  <div class="expand-content">
+    <ul>
+      <li>Hendrick, H. W. &amp; Kleiner, B. M. (2001). <em>Macroergonomics: An Introduction to Work System Design.</em> HFES.</li>
+      <li>Salas, E., Shuffler, M. L. &amp; Thayer, A. L. (2014). "Understanding and Improving Teamwork in Organizations." <em>Human Resource Management.</em></li>
+      <li>Paas, F. &amp; van Merri&euml;nboer, J. J. G. (2020). "Cognitive-Load Theory: Methods to Manage Working Memory Load." <em>Current Directions in Psychological Science.</em></li>
+    </ul>
+  </div>
+</div>
+</div>
+
+<script>
+const sections = [
+  { id: 'sec-0', label: 'Intro' },
+  { id: 'sec-1', label: '1. Pre-History' },
+  { id: 'sec-2', label: '2. Foundations' },
+  { id: 'sec-3', label: '3. Formation' },
+  { id: 'sec-4', label: '4. Academia' },
+  { id: 'sec-5', label: '5. Frameworks' },
+  { id: 'sec-6', label: '6. Tools' },
+  { id: 'sec-7', label: '7. LLMs' },
+  { id: 'sec-8', label: '8. Synthesis' },
+  { id: 'sec-9', label: '9. Systems' },
+];
+
+const completed = new Set();
+let currentSection = 0;
+
+function renderNav() {
+  const nav = document.getElementById('nav');
+  nav.innerHTML = sections.map((s, i) => {
+    const cls = [
+      i === currentSection ? 'active' : '',
+      completed.has(i) ? 'completed' : ''
+    ].filter(Boolean).join(' ');
+    return `<button class="${cls}" onclick="goTo(${i})">${s.label}</button>`;
+  }).join('');
+  document.getElementById('progress').style.width = `${(completed.size / (sections.length - 1)) * 100}%`;
+}
+
+function goTo(i) {
+  if (currentSection > 0) completed.add(currentSection);
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(sections[i].id).classList.add('active');
+  currentSection = i;
+  renderNav();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleExpand(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+function checkAnswer(el, correct) {
+  const quiz = el.closest('.quiz');
+  const options = quiz.querySelectorAll('.quiz-options li');
+  options.forEach(o => {
+    o.classList.add('disabled');
+    o.classList.remove('correct', 'incorrect');
+  });
+  el.classList.add(correct ? 'correct' : 'incorrect');
+  if (!correct) {
+    options.forEach(o => { if (o !== el && o.getAttribute('onclick').includes('true')) o.classList.add('correct'); });
+  }
+  quiz.querySelector('.quiz-explanation').classList.add('show');
+}
+
+renderNav();
+</script>
+</body>
+</html>

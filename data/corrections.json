@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 8,
   "strategies": [
     {
       "drift": "filler",
@@ -62,6 +62,13 @@
       "severity": "low",
       "query": "*",
       "template": "[Prior: drift on {reasons}. Correct.]"
+    },
+    {
+      "drift": "filler",
+      "severity": "*",
+      "query": "emotional",
+      "template": "[Prior emotional response had filler. Omit gently.]",
+      "source": "foundry"
     }
   ]
 }

@@ -65,7 +65,7 @@ def classify(prompt: str) -> str:
     for category, patterns in PATTERNS.items():
         score = 0
         for pattern in patterns:
-            if re.search(pattern, prompt_lower):
+            if re.search(pattern, prompt_lower, re.IGNORECASE):
                 score += 1
         if score > 0:
             scores[category] = score

@@ -126,6 +126,7 @@ Three proposal types:
 | `/lcars:calibrate` | Propose threshold adjustments from evidence (human-approved) |
 | `/lcars:consolidate` | Manually trigger pattern consolidation |
 | `/lcars:foundry` | Review and apply staged strategy proposals |
+| `/lcars:deep-eval` | On-demand LLM-as-judge evaluation against structured rubric |
 
 ## Architecture
 
@@ -139,10 +140,26 @@ lib/
 ├── fitness.py      # Correction effectiveness tracking
 ├── consolidate.py  # Session summary extraction + pattern consolidation
 ├── foundry.py      # Strategy crystallization from validated patterns
-├── observe.py      # PostToolUse logger (silent, async)
+├── observe.py      # PostToolUse + SubagentStart logger (silent, async)
 ├── thresholds.py   # Query-type-aware threshold management
 ├── transcript.py   # Transcript parsing utilities
 └── compat.py       # Cross-platform file locking (macOS/Linux/Windows)
+
+skills/
+├── dashboard/      # /lcars:dashboard
+├── calibrate/      # /lcars:calibrate
+├── consolidate/    # /lcars:consolidate
+├── foundry/        # /lcars:foundry
+└── deep-eval/      # /lcars:deep-eval (LLM-as-judge)
+
+agents/
+└── eval.md         # Autonomous evaluation agent (read-only)
+
+tests/              # 77 unit + integration tests (pytest)
+
+docs/
+├── methodology.md              # Design methodology (research basis, evaluation results)
+└── cognitive-ergonomics-primer.html  # Interactive primer (standalone, open in browser)
 ```
 
 Runtime data: `~/.claude/lcars/`
@@ -177,9 +194,27 @@ echo "Great question! I'd be happy to help." | python3 lib/score.py
 }
 ```
 
+## Testing
+
+```bash
+python3 -m pytest tests/ -v
+```
+
+77 tests covering: scoring accuracy, query classification, drift detection, severity classification, correction strategy selection, fitness tracking, overfit gates, foundry proposals, context assembly, data operations, end-to-end correction loop, and graceful degradation.
+
+## Design rationale
+
+See [DESIGN.md](DESIGN.md) for the recursive ergonomics framework — applying cognitive load theory to the LLM's own context constraints (attention sinks, lost-in-the-middle effects, context rot).
+
+## Documentation
+
+- [docs/methodology.md](docs/methodology.md) — Design methodology, research basis (35 citations), evaluation results across 48 queries
+- [docs/cognitive-ergonomics-primer.html](docs/cognitive-ergonomics-primer.html) — Interactive primer on cognitive ergonomics from first principles (open in browser)
+- [DESIGN.md](DESIGN.md) — Recursive ergonomics: the Sweller CLT → LLM mapping
+
 ## Research basis
 
-Grounded in cognitive load theory (Sweller, 1988), tool transparency (Winograd & Flores, 1986), calm technology (Weiser & Brown, 1996), organizational ergonomics (Hendrick & Kleiner, 2002), sycophancy characterization (Sharma et al., ICLR 2024), and empirical evaluation across 48 queries. Full bibliography: [lcars-eval](https://github.com/melek/lcars-eval).
+Grounded in cognitive load theory (Sweller, 1988), tool transparency (Winograd & Flores, 1986), calm technology (Weiser & Brown, 1996), organizational ergonomics (Hendrick & Kleiner, 2002), sycophancy characterization (Sharma et al., ICLR 2024), verbosity taxonomy (Zhang et al., 2024), sycophancy decomposition (Vennemeyer et al., 2025), and empirical evaluation across 48 queries. Full methodology and bibliography: [docs/methodology.md](docs/methodology.md).
 
 ## Requirements
 

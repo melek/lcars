@@ -35,5 +35,22 @@ def hook_main():
         f.write(json.dumps(entry) + "\n")
 
 
+def subagent_main():
+    """SubagentStart hook entry point. Observation only — no injection."""
+    hook_input = json.load(sys.stdin)
+
+    entry = {
+        "ts": time.time(),
+        "type": "subagent_start",
+        "agent_type": hook_input.get("agent_type", "unknown"),
+    }
+
+    with open(_tool_log_path(), "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
 if __name__ == "__main__":
-    hook_main()
+    if "--subagent" in sys.argv:
+        subagent_main()
+    else:
+        hook_main()

@@ -59,6 +59,18 @@
           }
         ]
       }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/lib/observe.py --subagent",
+            "timeout": 3,
+            "async": true
+          }
+        ]
+      }
     ]
   }
 }
