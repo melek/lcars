@@ -42,6 +42,7 @@ def lcars_tmpdir(tmp_path, monkeypatch):
     import store
     monkeypatch.setattr(store, "SCORES_FILE", str(lcars_dir / "scores.jsonl"))
     monkeypatch.setattr(store, "DRIFT_FILE", str(lcars_dir / "drift.json"))
+    monkeypatch.setattr(store, "DRIFT_LOG", str(lcars_dir / "drift-events.jsonl"))
 
     import fitness
     monkeypatch.setattr(fitness, "PENDING_FILE", str(lcars_dir / "pending-correction.json"))

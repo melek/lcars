@@ -148,7 +148,7 @@ def hook_main():
     # Add lib/ to path for sibling imports
     sys.path.insert(0, str(Path(__file__).parent))
     from transcript import extract_last_assistant_text
-    from store import append_score, write_drift_flag, rotate_store
+    from store import append_score, write_drift_flag, append_drift_event, rotate_store
     from drift import detect as detect_drift
     from classify import read_classification
     from fitness import evaluate_correction
@@ -180,6 +180,7 @@ def hook_main():
     # Query-type-aware drift detection
     drift_result = detect_drift(score, query_type)
     if drift_result:
+        append_drift_event(drift_result)
         write_drift_flag(drift_result)
 
     # Amortized rotation (~1% of invocations)

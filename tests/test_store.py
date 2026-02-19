@@ -86,6 +86,45 @@ class TestRotation:
         assert os.path.exists(store.SCORES_FILE)
 
 
+class TestSessionMarker:
+    def test_session_marker_appended(self, lcars_tmpdir):
+        store.append_session_marker("startup")
+
+        with open(store.SCORES_FILE) as f:
+            line = f.readline()
+        entry = json.loads(line)
+        assert entry["type"] == "session_start"
+        assert entry["source"] == "startup"
+        assert "epoch" in entry
+
+    def test_session_marker_resume(self, lcars_tmpdir):
+        store.append_session_marker("resume")
+
+        with open(store.SCORES_FILE) as f:
+            entry = json.loads(f.readline())
+        assert entry["source"] == "resume"
+
+
+class TestDriftEventLog:
+    def test_drift_event_appended(self, lcars_tmpdir):
+        details = {"categories": ["filler"], "severity": "high", "correction": "[test]"}
+        store.append_drift_event(details)
+
+        with open(store.DRIFT_LOG) as f:
+            entry = json.loads(f.readline())
+        assert entry["severity"] == "high"
+        assert entry["categories"] == ["filler"]
+        assert "epoch" in entry
+
+    def test_multiple_drift_events(self, lcars_tmpdir):
+        for sev in ("low", "high", "low"):
+            store.append_drift_event({"severity": sev})
+
+        with open(store.DRIFT_LOG) as f:
+            lines = [l for l in f if l.strip()]
+        assert len(lines) == 3
+
+
 class TestRollingStats:
     def test_rolling_stats_computation(self, lcars_tmpdir):
         now = time.time()

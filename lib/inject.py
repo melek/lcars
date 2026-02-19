@@ -19,7 +19,7 @@ PLUGIN_ROOT = Path(os.environ.get("CLAUDE_PLUGIN_ROOT", Path(__file__).parent.pa
 DATA_DIR = PLUGIN_ROOT / "data"
 
 sys.path.insert(0, str(Path(__file__).parent))
-from store import read_and_clear_drift_flag, last_score_age_hours, rolling_stats
+from store import read_and_clear_drift_flag, last_score_age_hours, rolling_stats, append_session_marker
 from fitness import record_correction
 
 
@@ -72,6 +72,9 @@ def main():
         source = hook_input.get("source", "startup")
     except (json.JSONDecodeError, EOFError):
         pass
+
+    # Log session boundary
+    append_session_marker(source)
 
     parts = []
 

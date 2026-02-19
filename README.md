@@ -168,6 +168,7 @@ Runtime data: `~/.claude/lcars/`
 ~/.claude/lcars/
 ├── scores.jsonl                    # Score ledger (weekly rotation)
 ├── drift.json                      # Ephemeral drift flag (consumed on read)
+├── drift-events.jsonl              # Persistent drift event log
 ├── thresholds.json                 # Active thresholds
 ├── query-type.tmp                  # Current query classification
 ├── pending-correction.json         # Correction awaiting effectiveness evaluation
@@ -200,7 +201,7 @@ echo "Great question! I'd be happy to help." | python3 lib/score.py
 python3 -m pytest tests/ -v
 ```
 
-77 tests covering: scoring accuracy, query classification, drift detection, severity classification, correction strategy selection, fitness tracking, overfit gates, foundry proposals, context assembly, data operations, end-to-end correction loop, and graceful degradation.
+81 tests covering: scoring accuracy, query classification, drift detection, severity classification, correction strategy selection, fitness tracking, overfit gates, foundry proposals, context assembly, data operations, end-to-end correction loop, and graceful degradation.
 
 ## Design rationale
 

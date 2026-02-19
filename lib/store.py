@@ -17,6 +17,7 @@ from compat import file_lock, file_unlock, lcars_dir
 
 SCORES_FILE = os.path.join(lcars_dir(), "scores.jsonl")
 DRIFT_FILE = os.path.join(lcars_dir(), "drift.json")
+DRIFT_LOG = os.path.join(lcars_dir(), "drift-events.jsonl")
 
 
 def append_score(score: dict):
@@ -32,11 +33,38 @@ def append_score(score: dict):
         file_unlock(f)
 
 
+def append_session_marker(source: str = "startup"):
+    """Log a session boundary marker to scores.jsonl."""
+    entry = {
+        "ts": datetime.now().isoformat(),
+        "epoch": time.time(),
+        "type": "session_start",
+        "source": source,
+    }
+    with open(SCORES_FILE, "a") as f:
+        file_lock(f)
+        f.write(json.dumps(entry) + "\n")
+        file_unlock(f)
+
+
 def write_drift_flag(details: dict):
     """Write drift flag for SessionStart hook to pick up."""
     with open(DRIFT_FILE, "w") as f:
         file_lock(f)
         json.dump(details, f)
+        file_unlock(f)
+
+
+def append_drift_event(details: dict):
+    """Append drift event to persistent log (drift-events.jsonl)."""
+    entry = {
+        "ts": datetime.now().isoformat(),
+        "epoch": time.time(),
+        **{k: v for k, v in details.items() if k not in ("ts", "epoch")},
+    }
+    with open(DRIFT_LOG, "a") as f:
+        file_lock(f)
+        f.write(json.dumps(entry) + "\n")
         file_unlock(f)
 
 
@@ -92,6 +120,8 @@ def rolling_stats(days: int = 7) -> dict | None:
                 if not line:
                     continue
                 entry = json.loads(line)
+                if entry.get("type") == "session_start":
+                    continue
                 if entry.get("epoch", 0) >= cutoff:
                     scores.append(entry)
     except (json.JSONDecodeError, OSError):
