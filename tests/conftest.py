@@ -51,6 +51,7 @@ def lcars_tmpdir(tmp_path, monkeypatch):
     import consolidate
     monkeypatch.setattr(consolidate, "SUMMARIES_FILE", str(memory_dir / "session-summaries.jsonl"))
     monkeypatch.setattr(consolidate, "PATTERNS_FILE", str(memory_dir / "patterns.json"))
+    monkeypatch.setattr(consolidate, "SCORES_FILE", str(lcars_dir / "scores.jsonl"))
 
     import foundry
     monkeypatch.setattr(foundry, "STAGED_FILE", str(memory_dir / "staged-strategies.json"))
