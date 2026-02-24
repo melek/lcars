@@ -127,6 +127,8 @@ Three proposal types:
 | `/lcars:consolidate` | Manually trigger pattern consolidation |
 | `/lcars:foundry` | Review and apply staged strategy proposals |
 | `/lcars:deep-eval` | On-demand LLM-as-judge evaluation against structured rubric |
+| `/lcars:fmea` | Interactive failure mode analysis for response breakdowns |
+| `/lcars:setup` | Validate installation and diagnose issues |
 
 ## Architecture
 
@@ -143,19 +145,25 @@ lib/
 ├── observe.py      # PostToolUse + SubagentStart logger (silent, async)
 ├── thresholds.py   # Query-type-aware threshold management
 ├── transcript.py   # Transcript parsing utilities
-└── compat.py       # Cross-platform file locking (macOS/Linux/Windows)
+├── compat.py       # Cross-platform file locking (macOS/Linux/Windows)
+└── setup.py        # Installation diagnostics (/lcars:setup)
+
+bin/
+└── python-shim.sh  # Cross-platform Python resolver (POSIX)
 
 skills/
 ├── dashboard/      # /lcars:dashboard
 ├── calibrate/      # /lcars:calibrate
 ├── consolidate/    # /lcars:consolidate
 ├── foundry/        # /lcars:foundry
-└── deep-eval/      # /lcars:deep-eval (LLM-as-judge)
+├── deep-eval/      # /lcars:deep-eval (LLM-as-judge)
+├── fmea/           # /lcars:fmea (failure mode analysis)
+└── setup/          # /lcars:setup (installation diagnostics)
 
 agents/
 └── eval.md         # Autonomous evaluation agent (read-only)
 
-tests/              # 77 unit + integration tests (pytest)
+tests/              # 107 unit + integration tests (pytest)
 
 docs/
 ├── methodology.md              # Design methodology (research basis, evaluation results)
@@ -201,7 +209,7 @@ echo "Great question! I'd be happy to help." | python3 lib/score.py
 python3 -m pytest tests/ -v
 ```
 
-81 tests covering: scoring accuracy, query classification, drift detection, severity classification, correction strategy selection, fitness tracking, overfit gates, foundry proposals, context assembly, data operations, end-to-end correction loop, and graceful degradation.
+107 tests covering: scoring accuracy, word boundary enforcement, query classification, drift detection, severity classification, correction strategy selection, fitness tracking, overfit gates, session segmentation, segment-based consolidation, foundry proposals, context assembly, data operations, installation diagnostics, end-to-end correction loop, and graceful degradation.
 
 ## Design rationale
 
@@ -211,6 +219,8 @@ See [DESIGN.md](DESIGN.md) for the recursive ergonomics framework — applying c
 
 - [docs/methodology.md](docs/methodology.md) — Design methodology, research basis (35 citations), evaluation results across 48 queries
 - [docs/cognitive-ergonomics-primer.html](docs/cognitive-ergonomics-primer.html) — Interactive primer on cognitive ergonomics from first principles (open in browser)
+- [docs/hybrid-scoring-design.md](docs/hybrid-scoring-design.md) — Design for hybrid regex + LLM-as-judge scoring
+- [docs/epistemic-adequacy-design.md](docs/epistemic-adequacy-design.md) — Design for epistemic adequacy detection
 - [DESIGN.md](DESIGN.md) — Recursive ergonomics: the Sweller CLT → LLM mapping
 
 ## Research basis

@@ -14,10 +14,8 @@ When user runs `/lcars:setup`:
 1. Run the diagnostic script:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/lib/setup.py
+sh ${CLAUDE_PLUGIN_ROOT}/bin/python-shim.sh ${CLAUDE_PLUGIN_ROOT}/lib/setup.py
 ```
-
-On Windows (if `python3` is not found), use `python` instead.
 
 2. Present results as a table:
 

@@ -40,41 +40,7 @@ def segment_sessions(scores_path: str) -> list[list[dict]]:
     marker are treated as one session. Empty segments (marker immediately
     followed by marker, or trailing marker with no scores) are filtered out.
     """
-    if not os.path.exists(scores_path):
-        return []
-
-    entries = []
-    try:
-        with open(scores_path) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                entries.append(json.loads(line))
-    except (json.JSONDecodeError, OSError):
-        return []
-
-    segments = []
-    current = []
-
-    for entry in entries:
-        if entry.get("type") == "session_start":
-            if current:
-                segments.append(current)
-            current = []
-            # Store marker epoch on the segment for cache keying
-            current.append({"_marker_epoch": entry.get("epoch", 0)})
-            current.pop()  # Don't include the pseudo-entry; just note we started fresh
-            # We need the marker epoch accessible — store it differently
-        else:
-            current.append(entry)
-
-    # Flush the last segment
-    if current:
-        segments.append(current)
-
-    # Filter out empty segments
-    return [s for s in segments if s]
+    return [segment for _, segment in _segment_sessions_with_keys(scores_path)]
 
 
 def _segment_sessions_with_keys(scores_path: str) -> list[tuple[float, list[dict]]]:

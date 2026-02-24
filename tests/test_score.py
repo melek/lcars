@@ -78,6 +78,18 @@ class TestInformationDensity:
         assert 0.0 <= density <= 1.0
 
 
+class TestWordBoundaries:
+    def test_substring_not_matched(self):
+        """Words containing filler phrases as substrings should not match."""
+        result = score_response("The solution is uncertainly better than the alternative.")
+        assert result["padding_count"] == 0
+
+    def test_filler_still_matched_standalone(self):
+        """Filler phrases still match when used as standalone phrases."""
+        result = score_response("Certainly! The answer is 42.")
+        assert result["padding_count"] >= 1
+
+
 class TestEdgeCases:
     def test_empty_string(self):
         result = score_response("")
