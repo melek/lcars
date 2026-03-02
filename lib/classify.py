@@ -14,6 +14,9 @@ import re
 import sys
 from pathlib import Path
 
+# Add lib/ to path for sibling imports (store, fitness)
+sys.path.insert(0, str(Path(__file__).parent))
+
 # Query-type detection patterns (ordered by specificity)
 PATTERNS = {
     "code": [
@@ -108,7 +111,6 @@ def read_classification() -> str:
 
 def _load_correction() -> str:
     """Read drift flag and return correction string. Consumes (deletes) the flag."""
-    sys.path.insert(0, str(Path(__file__).parent))
     from store import read_and_clear_drift_flag
     from fitness import record_correction
 
