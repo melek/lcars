@@ -18,8 +18,7 @@
           {
             "type": "command",
             "command": "sh ${CLAUDE_PLUGIN_ROOT}/bin/python-shim.sh ${CLAUDE_PLUGIN_ROOT}/lib/classify.py --hook",
-            "timeout": 3,
-            "async": true
+            "timeout": 3
           }
         ]
       }

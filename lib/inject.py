@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """SessionStart hook: assemble LCARS context for injection.
 
-Three named context layers:
+Two named context layers:
 - anchor: behavioral anchor (always, ~50 tokens)
-- correction: drift correction from decision table (if drift.json exists, 0-60 tokens)
 - stats: rolling session stats (if resuming after gap > 4h, ~30 tokens)
+
+Correction injection moved to classify.py (UserPromptSubmit hook) so corrections
+fire on the next user message within the same session.
 
 Source-aware: adapts injection based on session source (startup/resume/clear/compact).
 Outputs JSON with hookSpecificOutput.additionalContext.
@@ -19,8 +21,7 @@ PLUGIN_ROOT = Path(os.environ.get("CLAUDE_PLUGIN_ROOT", Path(__file__).parent.pa
 DATA_DIR = PLUGIN_ROOT / "data"
 
 sys.path.insert(0, str(Path(__file__).parent))
-from store import read_and_clear_drift_flag, last_score_age_hours, rolling_stats, append_session_marker
-from fitness import record_correction
+from store import last_score_age_hours, rolling_stats, append_session_marker
 
 
 def load_anchor() -> str:
@@ -29,19 +30,6 @@ def load_anchor() -> str:
     if path.exists():
         return path.read_text().strip()
     return ""
-
-
-def load_correction() -> str:
-    """Drift correction from decision table. Only if drift was detected."""
-    drift = read_and_clear_drift_flag()
-    if not drift:
-        return ""
-
-    # drift.py already selected the correction template and formatted it
-    correction = drift.get("correction", "")
-    if correction:
-        record_correction(drift)
-    return correction
 
 
 def load_stats(source: str = "startup") -> str:
@@ -81,10 +69,6 @@ def main():
     anchor = load_anchor()
     if anchor:
         parts.append(anchor)
-
-    correction = load_correction()
-    if correction:
-        parts.append(correction)
 
     stats = load_stats(source)
     if stats:

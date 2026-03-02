@@ -7,11 +7,12 @@ import score as score_mod
 import store
 import drift as drift_mod
 import inject
+from classify import hook_main_output
 
 
 class TestCorrectionLoop:
     def test_full_loop(self, lcars_tmpdir):
-        """Score sycophantic → drift.json created → inject reads it → correction in output → consumed."""
+        """Score sycophantic → drift.json created → classify reads it → correction in output → consumed."""
         # Step 1: Score a sycophantic response
         text = "Great question! I'd be happy to help you with that. The answer is 42. Let me know if you need anything else."
         result = score_mod.score_response(text)
@@ -26,15 +27,16 @@ class TestCorrectionLoop:
         store.write_drift_flag(drift_result)
         assert os.path.exists(store.DRIFT_FILE)
 
-        # Step 4: Inject reads drift flag → correction appears
-        correction = inject.load_correction()
+        # Step 4: Classify hook reads drift flag → correction appears via additionalContext
+        output = hook_main_output("next question")
+        correction = output["hookSpecificOutput"]["additionalContext"]
         assert correction != ""
 
         # Step 5: Drift flag consumed
         assert not os.path.exists(store.DRIFT_FILE)
 
     def test_clean_response_no_drift(self, lcars_tmpdir):
-        """Clean response → no drift.json → inject returns anchor only."""
+        """Clean response → no drift.json → classify returns no correction, inject returns anchor only."""
         text = "Line 42 has a TypeError. Change `str` to `int`."
         result = score_mod.score_response(text)
         assert result["padding_count"] == 0
@@ -45,9 +47,11 @@ class TestCorrectionLoop:
         # No drift flag written
         assert not os.path.exists(store.DRIFT_FILE)
 
-        # Inject returns only anchor
-        correction = inject.load_correction()
-        assert correction == ""
+        # Classify returns no correction
+        output = hook_main_output("next question")
+        assert output.get("hookSpecificOutput", {}).get("additionalContext") is None
+
+        # Inject still returns anchor
         anchor = inject.load_anchor()
         assert anchor != ""
 

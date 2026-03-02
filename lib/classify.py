@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 
 # Query-type detection patterns (ordered by specificity)
 PATTERNS = {
@@ -105,12 +106,46 @@ def read_classification() -> str:
         return "ambiguous"
 
 
+def _load_correction() -> str:
+    """Read drift flag and return correction string. Consumes (deletes) the flag."""
+    sys.path.insert(0, str(Path(__file__).parent))
+    from store import read_and_clear_drift_flag
+    from fitness import record_correction
+
+    drift = read_and_clear_drift_flag()
+    if not drift:
+        return ""
+
+    correction = drift.get("correction", "")
+    if correction:
+        record_correction(drift)
+    return correction
+
+
+def hook_main_output(prompt: str) -> dict:
+    """Classify prompt and check for pending corrections. Returns hook output dict."""
+    query_type = classify(prompt)
+    write_classification(query_type)
+
+    correction = _load_correction()
+
+    if correction:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "UserPromptSubmit",
+                "additionalContext": correction,
+            }
+        }
+    return {}
+
+
 def hook_main():
     """UserPromptSubmit hook entry point."""
     hook_input = json.load(sys.stdin)
     prompt = hook_input.get("prompt", "")
-    query_type = classify(prompt)
-    write_classification(query_type)
+    output = hook_main_output(prompt)
+    if output:
+        print(json.dumps(output))
 
 
 if __name__ == "__main__":
