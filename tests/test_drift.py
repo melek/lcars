@@ -71,6 +71,21 @@ class TestSeverityClassification:
         assert severity == "high"  # 0.60 - 0.45 = 0.15 > 0.10
 
 
+class TestAnswerPositionCoverage:
+    def test_answer_position_triggers_preamble_correction(self):
+        """answer_position > 0 triggers preamble category and selects preamble correction."""
+        score = {
+            "padding_count": 0,
+            "answer_position": 8,
+            "info_density": 0.70,
+        }
+        result = detect(score, "ambiguous")
+        assert result is not None
+        assert "preamble" in result["categories"]
+        assert result["correction"] != ""
+        assert "preamble" in result["correction"].lower() or "answer" in result["correction"].lower()
+
+
 class TestCorrectionSelection:
     def test_filler_high_returns_template_with_placeholder(self):
         score = {"padding_count": 5, "answer_position": 0, "info_density": 0.70}
