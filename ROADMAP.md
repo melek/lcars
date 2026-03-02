@@ -16,15 +16,17 @@ Interactive failure mode analysis for response breakdowns. Classifies failures (
 - Epistemic Adequacy (`EpAd`, 0-3) added to the deep-eval rubric — scores whether confidence matches evidence gathered
 - Design docs for hybrid scoring (regex + LLM judge escalation) and epistemic adequacy detection
 
-## v0.5.1 — Mid-conversation corrections (#9)
+## v0.5.1 — Mid-conversation corrections (#9) (shipped)
 
 ### Bug: corrections inject cross-session instead of mid-conversation
+Correction injection moved from `SessionStart` (inject.py) to `UserPromptSubmit` (classify.py). Corrections now fire on the next user message within the same session. UserPromptSubmit hook is synchronous to support `additionalContext` output. SessionStart continues to inject anchor + stats.
 
-The `Stop` hook detects drift and writes `drift.json`, but corrections are only read during `SessionStart` — meaning drift in turn 3 isn't corrected until the next session (potentially hours later). The pop semantics (`read_and_clear_drift_flag`) confirm the original intent was single-shot mid-conversation course correction.
+### Investigation: answer_position drift (#12)
+Dashboard data showed answer_position as dominant drift (9/10 recent events). Investigation confirmed answer_position shares the preamble detection path — existing preamble corrections cover it (100% effective). Detecting non-pattern delayed answers is a v0.6.0 hybrid scoring concern.
 
-**Fix:** Move correction injection from `SessionStart` to `UserPromptSubmit`, which already supports `additionalContext` and fires on the next user message within the same session. `SessionStart` continues to inject anchor + stats.
-
-This also clarifies the design split: mid-conversation corrections are ephemeral (pop); cross-session corrections responding to repeated drift patterns would be a separate, durable mechanism.
+### Closed as non-issues
+- #11: Per-record density appeared missing but field name is `info_density` (working correctly)
+- #13: "Unknown" query types were records from early install (Feb 17-19) missing the field entirely — no current classifier issue
 
 ## v0.6.0 — Tool Crystallization (OpenClaw-inspired)
 
