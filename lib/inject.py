@@ -74,6 +74,19 @@ def main():
     if stats:
         parts.append(stats)
 
+    # Environment tools line for promoted discovered tools
+    try:
+        import registry
+        import discover
+        env_tools = [t for t in registry.list_by_provenance("discovered")
+                     if t.get("status") == "active" and t.get("tier") == "promoted"]
+        if env_tools:
+            env_line = discover.format_injection(env_tools)
+            if env_line:
+                parts.append(env_line)
+    except Exception:
+        pass  # Non-critical — don't block session start
+
     if not parts:
         return
 

@@ -101,7 +101,8 @@ def _strategy_exists(strategies: list[dict], drift: str, severity: str, query: s
 def analyze() -> dict:
     """Analyze patterns and outcomes to generate proposals.
 
-    Returns a report with any new proposals staged.
+    Returns a report with any new proposals staged (both correction strategies
+    and tool crystallization candidates).
     """
     corrections = _load_corrections()
     strategies = corrections.get("strategies", [])
@@ -134,12 +135,16 @@ def analyze() -> dict:
         all_staged = existing_staged + new_proposals
         _save_staged(all_staged)
 
+    # 4. Tool crystallization: repeated deterministic sequences → tool proposals
+    tool_proposals = _find_tool_candidates()
+
     return {
         "patterns_analyzed": len(patterns),
         "outcomes_analyzed": len(outcomes),
         "new_proposals": len(new_proposals),
         "total_staged": len(existing_staged) + len(new_proposals),
         "proposals": new_proposals,
+        "tool_proposals": len(tool_proposals),
     }
 
 
@@ -281,6 +286,89 @@ def _suggest_template(drift_type: str, query_type: str) -> str:
     }
     return templates.get((drift_type, query_type),
                          f"[Prior {query_type} response had {drift_type} drift. Correct.]")
+
+
+def _find_tool_candidates() -> list[dict]:
+    """Find repeated deterministic tool sequences that could be crystallized.
+
+    Reads tool-usage.jsonl for patterns: same tool sequence appearing 3+ times
+    across 2+ sessions. Proposes as crystallization candidates via bridge.
+    """
+    try:
+        import registry as reg
+        from bridge import stage_proposal
+    except ImportError:
+        return []
+
+    tool_log = os.path.join(os.path.dirname(OUTCOMES_FILE), "..", "tool-usage.jsonl")
+    tool_log = os.path.normpath(tool_log)
+    if not os.path.exists(tool_log):
+        return []
+
+    # Read tool usage entries
+    entries = []
+    try:
+        with open(tool_log) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                entry = json.loads(line)
+                if entry.get("type") != "session_start":
+                    entries.append(entry)
+    except (json.JSONDecodeError, OSError):
+        return []
+
+    if len(entries) < 6:
+        return []
+
+    # Find repeated consecutive tool pairs/triples
+    from collections import Counter
+    pair_counter = Counter()
+    session_pairs = {}  # pair -> set of session timestamps
+
+    # Group by approximate sessions (entries within 2h of each other)
+    sessions = []
+    current_session = []
+    for e in entries:
+        if current_session and e.get("ts", 0) - current_session[-1].get("ts", 0) > 7200:
+            sessions.append(current_session)
+            current_session = []
+        current_session.append(e)
+    if current_session:
+        sessions.append(current_session)
+
+    for session in sessions:
+        tools = [e.get("tool", "") for e in session]
+        session_key = session[0].get("ts", 0)
+        for i in range(len(tools) - 1):
+            pair = (tools[i], tools[i + 1])
+            pair_counter[pair] += 1
+            session_pairs.setdefault(pair, set()).add(session_key)
+
+    proposals = []
+    existing_registry = {t["name"] for t in reg.load().get("tools", [])}
+
+    for pair, count in pair_counter.most_common(5):
+        if count < 3:
+            break
+        session_count = len(session_pairs.get(pair, set()))
+        if session_count < 2:
+            continue
+        pair_name = f"{pair[0]}+{pair[1]}"
+        if pair_name in existing_registry:
+            continue
+
+        proposal = {
+            "tool_id": f"prop:{pair_name}",
+            "name": pair_name,
+            "description": f"Sequence: {pair[0]} → {pair[1]} (seen {count}x across {session_count} sessions)",
+            "source_pattern": {"sequence": list(pair), "occurrences": count, "sessions": session_count},
+        }
+        stage_proposal(proposal)
+        proposals.append(proposal)
+
+    return proposals
 
 
 def apply_proposals(indices: list[int]) -> dict:

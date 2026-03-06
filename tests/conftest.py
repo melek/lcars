@@ -58,6 +58,15 @@ def lcars_tmpdir(tmp_path, monkeypatch):
     monkeypatch.setattr(foundry, "OUTCOMES_FILE", str(memory_dir / "correction-outcomes.jsonl"))
     monkeypatch.setattr(foundry, "PATTERNS_FILE", str(memory_dir / "patterns.json"))
 
+    import registry
+    monkeypatch.setattr(registry, "REGISTRY_FILE", str(memory_dir / "tool-registry.json"))
+
+    import discover
+    monkeypatch.setattr(discover, "ENV_SCAN_FILE", str(memory_dir / "env-scan.json"))
+
+    import bridge
+    monkeypatch.setattr(bridge, "STAGED_TOOLS_FILE", str(memory_dir / "staged-tools.json"))
+
     return lcars_dir
 
 

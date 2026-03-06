@@ -47,6 +47,38 @@ Read `thresholds.json` and display the global defaults plus any query-type overr
 
 Read `memory/patterns.json` and list any validated or stale patterns with their session counts and date ranges.
 
+### Tool Registry
+
+Read `~/.claude/lcars/memory/tool-registry.json` and display tracked tools by tier:
+
+```bash
+python3 -c "
+import sys, json
+sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}/lib')
+import registry
+reg = registry.load()
+tools = reg.get('tools', [])
+by_tier = {}
+for t in tools:
+    tier = t.get('tier', 'candidate')
+    by_tier.setdefault(tier, []).append(t)
+for tier in ['promoted', 'standard', 'candidate']:
+    group = by_tier.get(tier, [])
+    if group:
+        print(f'\n{tier.upper()} ({len(group)}):')
+        for t in group:
+            inv = t.get('lifetime_invocations', 0)
+            rate = t.get('lifetime_successes', 0) / inv if inv > 0 else None
+            rate_str = f'{rate:.0%}' if rate is not None else 'n/a'
+            print(f'  {t[\"name\"]:15s}  inv={inv:3d}  fitness={rate_str:>4s}  {t.get(\"status\", \"\")}')
+archived = len(by_tier.get('archived', []) + [t for t in tools if t.get('status') == 'archived'])
+if archived:
+    print(f'\nARCHIVED: {archived}')
+"
+```
+
+Show promoted tools (injected into context), standard tools (tracked), and candidate count. Include fitness rate for tools with usage.
+
 ### Recent Drift Events
 
 Read the last 10 entries from `scores.jsonl` that have `padding_count > 0` or `answer_position > 0`, showing timestamp, query type, and which dimensions drifted.

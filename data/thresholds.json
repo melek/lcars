@@ -12,5 +12,12 @@
     "diagnostic": {
       "density": 0.55
     }
+  },
+  "tool_fitness": {
+    "promote_to_standard": {"min_obs": 5, "min_days": 3, "min_rate": 0.50},
+    "promote_to_promoted": {"min_obs": 20, "min_days": 7, "min_rate": 0.80},
+    "demote_threshold": 0.60,
+    "archive_zero_use_days": 30,
+    "max_promoted_injected": 3
   }
 }

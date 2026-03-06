@@ -34,6 +34,17 @@ def hook_main():
     with open(_tool_log_path(), "a") as f:
         f.write(json.dumps(entry) + "\n")
 
+    # Update registry usage counters if tool is tracked
+    try:
+        sys.path.insert(0, os.path.dirname(__file__))
+        import registry
+        ok = entry.get("ok", True)
+        reg_entry = registry.get(f"tf:{tool_name}") or registry.get(f"disc:{tool_name}")
+        if reg_entry:
+            registry.record_usage(reg_entry["id"], success=ok)
+    except Exception:
+        pass  # Non-critical — don't block hook
+
 
 def subagent_main():
     """SubagentStart hook entry point. Observation only — no injection."""

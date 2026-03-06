@@ -1,0 +1,24 @@
+{
+  "tools": {
+    "jq": {"description": "Command-line JSON processor", "alternatives": []},
+    "rg": {"description": "ripgrep - fast recursive search", "alternatives": ["grep"]},
+    "fd": {"description": "fd-find - fast file finder", "alternatives": ["find"]},
+    "gh": {"description": "GitHub CLI", "alternatives": []},
+    "bat": {"description": "cat with syntax highlighting", "alternatives": ["cat"]},
+    "bun": {"description": "JavaScript runtime", "alternatives": ["node"]},
+    "duckdb": {"description": "Analytical SQL engine", "alternatives": ["sqlite3"]},
+    "delta": {"description": "Git diff viewer", "alternatives": ["diff"]},
+    "sd": {"description": "sed alternative", "alternatives": ["sed"]},
+    "eza": {"description": "Modern ls replacement", "alternatives": ["ls"]},
+    "fzf": {"description": "Fuzzy finder", "alternatives": []},
+    "just": {"description": "Command runner", "alternatives": ["make"]},
+    "uv": {"description": "Python package manager", "alternatives": ["pip"]},
+    "cargo": {"description": "Rust package manager", "alternatives": []},
+    "go": {"description": "Go toolchain", "alternatives": []},
+    "docker": {"description": "Container runtime", "alternatives": ["podman"]},
+    "kubectl": {"description": "Kubernetes CLI", "alternatives": []},
+    "pmset": {"description": "macOS power management", "alternatives": []},
+    "brew": {"description": "Homebrew package manager", "alternatives": []},
+    "sqlite3": {"description": "SQLite CLI", "alternatives": []}
+  }
+}

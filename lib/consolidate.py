@@ -381,6 +381,20 @@ def hook_main():
         if result.get("status") == "consolidated" and result.get("patterns_validated", 0) > 0:
             from foundry import analyze
             analyze()
+        # Recompute tool fitness
+        try:
+            from tool_fitness import recompute
+            recompute()
+        except Exception:
+            pass
+
+    # Amortized environment scan (~5% of compactions)
+    if random.random() < 0.05:
+        try:
+            from discover import scan
+            scan()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
