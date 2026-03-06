@@ -1,12 +1,12 @@
-"""Tool-factory coordination bridge.
+"""Tool proposal staging for Foundry crystallization.
 
-File-based handoff between Foundry and tool-factory. Foundry writes proposals
-to staged-tools.json. The /lcars:foundry skill reads them and instructs Claude
-to call tool-factory MCP tools directly. LCARS never calls MCP itself.
+Foundry writes tool proposals to staged-tools.json. The /lcars:foundry skill
+reads them, asks user approval, then calls factory__create_tool via MCP.
+After MCP confirms, mark_registered updates the registry.
 
 Invariants:
   NoAutoDeployment: crystallized tool is never registered without user approval
-  Bridge never executes tool code — only stages/coordinates
+  Staging never executes tool code — only stages/coordinates
 """
 
 import json
@@ -100,32 +100,3 @@ def mark_registered(tool_id: str, mcp_name: str):
     }
     registry.upsert(entry)
     _save_staged_file(remaining)
-
-
-def sync_from_factory(factory_list: list):
-    """Import user-created tool-factory tools into registry.
-
-    Pre: factory_list is a list of dicts with 'name' and 'description'.
-    Post: tools in registry with provenance='user-created'.
-    """
-    existing = {t["name"] for t in registry.list_by_provenance("user-created")}
-
-    for tool in factory_list:
-        name = tool.get("name", "")
-        if not name or name in existing:
-            continue
-
-        entry = {
-            "id": f"tf:{name}",
-            "provenance": "user-created",
-            "name": name,
-            "description": tool.get("description", ""),
-            "source": {"origin": "tool-factory"},
-            "status": "active",
-            "tier": "candidate",
-            "created_epoch": time.time(),
-            "last_used_epoch": 0,
-            "lifetime_invocations": 0,
-            "lifetime_successes": 0,
-        }
-        registry.upsert(entry)

@@ -68,7 +68,7 @@ The analysis output includes `tool_proposals` — repeated tool sequences detect
 If tool proposals exist, show them from `~/.claude/lcars/memory/staged-tools.json`:
 
 ```bash
-python3 -c "import sys, json; sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}/lib'); from bridge import load_staged; print(json.dumps(load_staged(), indent=2))"
+python3 -c "import sys, json; sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}/lib'); from staging import load_staged; print(json.dumps(load_staged(), indent=2))"
 ```
 
 For each tool proposal, display:
@@ -80,18 +80,8 @@ If user approves a tool proposal:
 1. Call `factory__create_tool` via MCP with the tool's name and description
 2. After MCP confirms, mark registered:
    ```bash
-   python3 -c "import sys; sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}/lib'); from bridge import mark_registered; mark_registered('TOOL_ID', 'MCP_NAME')"
+   python3 -c "import sys; sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}/lib'); from staging import mark_registered; mark_registered('TOOL_ID', 'MCP_NAME')"
    ```
-
-### 7. Factory Sync
-
-On first run, sync existing tool-factory tools into the registry:
-
-```bash
-python3 -c "import sys; sys.path.insert(0, '${CLAUDE_PLUGIN_ROOT}/lib'); from bridge import sync_from_factory; sync_from_factory(FACTORY_LIST)"
-```
-
-Where `FACTORY_LIST` comes from calling `factory__list_tools` via MCP.
 
 ## When There's Nothing Staged
 

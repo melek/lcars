@@ -27,6 +27,7 @@ sh ${CLAUDE_PLUGIN_ROOT}/bin/python-shim.sh ${CLAUDE_PLUGIN_ROOT}/lib/setup.py
 | thresholds | pass/fail/warn | config validity |
 | imports | pass/fail | module availability |
 | scoring | pass/fail/warn | pipeline test result |
+| tool-factory | pass/fail/warn | MCP server config |
 
 3. For any failures, provide platform-specific remediation:
 

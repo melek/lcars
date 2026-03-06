@@ -64,8 +64,8 @@ def lcars_tmpdir(tmp_path, monkeypatch):
     import discover
     monkeypatch.setattr(discover, "ENV_SCAN_FILE", str(memory_dir / "env-scan.json"))
 
-    import bridge
-    monkeypatch.setattr(bridge, "STAGED_TOOLS_FILE", str(memory_dir / "staged-tools.json"))
+    import staging
+    monkeypatch.setattr(staging, "STAGED_TOOLS_FILE", str(memory_dir / "staged-tools.json"))
 
     return lcars_dir
 

@@ -296,7 +296,7 @@ def _find_tool_candidates() -> list[dict]:
     """
     try:
         import registry as reg
-        from bridge import stage_proposal
+        from staging import stage_proposal
     except ImportError:
         return []
 

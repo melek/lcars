@@ -28,29 +28,24 @@ Dashboard data showed answer_position as dominant drift (9/10 recent events). In
 - #11: Per-record density appeared missing but field name is `info_density` (working correctly)
 - #13: "Unknown" query types were records from early install (Feb 17-19) missing the field entirely — no current classifier issue
 
-## v0.6.0 — Tool Crystallization (OpenClaw-inspired)
+## v0.6.0 — Tool Crystallization (OpenClaw-inspired) (shipped)
 
-Extend the Foundry from behavioral correction strategies to deterministic tool creation. The current Foundry observes drift patterns and crystallizes correction *templates* (text injected into context). The next step: crystallize reusable *tools* — executable scripts created, tested, and managed by the plugin itself.
+Extend the Foundry from behavioral correction strategies to deterministic tool creation. Foundry observes drift patterns and crystallizes correction *templates* (text injected into context). v0.6.0 adds tool crystallization: reusable *tools* — executable scripts created, tested, and managed by the plugin itself.
 
-### tool-factory integration (#10)
+### tool-factory absorbed (#10, #17)
 
-tool-factory is currently a standalone MCP server providing a dynamic tool registry — Claude can create, test, archive, and invoke Python tools at runtime, with new tools immediately available in-session via MCP. It's underutilized because there's no observer feeding it: Claude must self-identify repeated patterns mid-conversation, which structurally doesn't happen without cross-session memory.
+The standalone tool-factory MCP server has been absorbed into the LCARS repo at `tool_factory/server.py`. Storage is unified: tool metadata in the LCARS registry (`tool-registry.json`), scripts in `~/.claude/lcars/tools/`.
 
-Bundling tool-factory into LCARS connects the observer (scoring, drift detection, consolidation) to the actuator (tool creation). Integration approach is open:
+**What shipped:**
+- `tool_factory/server.py` — MCP server with 6 meta-tools (create, list, get, delete, archive, restore) + dynamic tool execution
+- `lib/staging.py` — simplified from the old `bridge.py`; stages Foundry proposals for user approval
+- Formal verification of tool lifecycle invariants via Proven/Dafny (7 properties)
+- 20 new tests covering CRUD, archive/restore cycle, execution, and registry integration
 
-- **LCARS as MCP client** — hooks call tool-factory's `create_tool` endpoint via bridge script
-- **Absorb tool-factory** — registry becomes a LCARS module, served from the plugin's own MCP surface
-- **Shared data layer** — LCARS writes tool proposals to disk, tool-factory picks them up
-
-### Concept
-
-The same observe → validate → crystallize → stage → approve flow, but the output is an MCP tool rather than a correction template. When the plugin detects a recurring pattern that would benefit from a deterministic tool (e.g., a formatting task the model keeps doing inconsistently), it proposes a tool, stages it for review, and — on approval — registers it.
-
-### Open questions
-
-- **Scope boundary:** When does a pattern warrant a tool vs. a correction template? A correction fixes *how the model responds*. A tool automates *what the model does*. The distinction may be: corrections for behavioral drift, tools for repeated deterministic operations.
-- **Tool lifecycle:** Tools created by the Foundry should be subject to the same fitness tracking as corrections. If a tool isn't used or isn't effective, propose archival.
-- **Safety:** Auto-generated executable code needs review. The stage → approve gate is mandatory. Consider sandboxed test execution before staging (see automatic tool testing harness below).
+**Design decisions:**
+- **Scope boundary:** Corrections fix *how the model responds*. Tools automate *what the model does*. Corrections for behavioral drift, tools for repeated deterministic operations.
+- **Tool lifecycle:** Tools are subject to the same fitness tracking as corrections (candidate → standard → promoted). Unused tools get archived.
+- **Safety:** Stage → approve gate is mandatory (NoAutoDeployment invariant). Foundry proposes tools, user approves via MCP call.
 
 ### Hybrid scoring implementation
 

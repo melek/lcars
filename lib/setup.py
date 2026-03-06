@@ -180,6 +180,50 @@ def check_scoring() -> dict:
         }
 
 
+def check_tool_factory() -> dict:
+    """Verify the tool-factory MCP server is configured in ~/.claude.json."""
+    claude_json = os.path.join(os.path.expanduser("~"), ".claude.json")
+    if not os.path.isfile(claude_json):
+        return {
+            "name": "tool-factory",
+            "status": "warn",
+            "detail": "~/.claude.json not found",
+        }
+    try:
+        with open(claude_json) as f:
+            data = json.load(f)
+        servers = data.get("mcpServers", {})
+        if "tool-factory" not in servers:
+            return {
+                "name": "tool-factory",
+                "status": "warn",
+                "detail": "Not configured in mcpServers (add tool_factory/server.py)",
+            }
+        server_path = ""
+        args = servers["tool-factory"].get("args", [])
+        for arg in args:
+            if "server.py" in str(arg):
+                server_path = str(arg)
+                break
+        if "tool_factory" in server_path:
+            return {
+                "name": "tool-factory",
+                "status": "pass",
+                "detail": server_path,
+            }
+        return {
+            "name": "tool-factory",
+            "status": "warn",
+            "detail": f"Configured but may point to old standalone: {server_path}",
+        }
+    except (json.JSONDecodeError, OSError) as e:
+        return {
+            "name": "tool-factory",
+            "status": "fail",
+            "detail": f"Error reading ~/.claude.json: {e}",
+        }
+
+
 def run_all_checks() -> list[dict]:
     """Run all diagnostic checks and return results."""
     return [
@@ -189,6 +233,7 @@ def run_all_checks() -> list[dict]:
         check_thresholds(),
         check_imports(),
         check_scoring(),
+        check_tool_factory(),
     ]
 
 
