@@ -33,7 +33,7 @@ def append_score(score: dict):
         file_unlock(f)
 
 
-def append_session_marker(source: str = "startup"):
+def append_session_marker(source: str = "startup", version: str | None = None):
     """Log a session boundary marker to scores.jsonl."""
     entry = {
         "ts": datetime.now().isoformat(),
@@ -41,6 +41,8 @@ def append_session_marker(source: str = "startup"):
         "type": "session_start",
         "source": source,
     }
+    if version:
+        entry["version"] = version
     with open(SCORES_FILE, "a") as f:
         file_lock(f)
         f.write(json.dumps(entry) + "\n")

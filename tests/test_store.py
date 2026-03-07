@@ -104,6 +104,20 @@ class TestSessionMarker:
             entry = json.loads(f.readline())
         assert entry["source"] == "resume"
 
+    def test_session_marker_with_version(self, lcars_tmpdir):
+        store.append_session_marker("startup", version="0.6.1")
+
+        with open(store.SCORES_FILE) as f:
+            entry = json.loads(f.readline())
+        assert entry["version"] == "0.6.1"
+
+    def test_session_marker_without_version(self, lcars_tmpdir):
+        store.append_session_marker("startup")
+
+        with open(store.SCORES_FILE) as f:
+            entry = json.loads(f.readline())
+        assert "version" not in entry
+
 
 class TestDriftEventLog:
     def test_drift_event_appended(self, lcars_tmpdir):

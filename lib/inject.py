@@ -24,6 +24,15 @@ sys.path.insert(0, str(Path(__file__).parent))
 from store import last_score_age_hours, rolling_stats, append_session_marker
 
 
+def _plugin_version() -> str | None:
+    """Read version from plugin.json."""
+    path = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
+    try:
+        return json.loads(path.read_text()).get("version")
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 def load_anchor() -> str:
     """Behavioral anchor. Always injected."""
     path = DATA_DIR / "anchor.txt"
@@ -61,8 +70,8 @@ def main():
     except (json.JSONDecodeError, EOFError):
         pass
 
-    # Log session boundary
-    append_session_marker(source)
+    # Log session boundary with version
+    append_session_marker(source, version=_plugin_version())
 
     parts = []
 
