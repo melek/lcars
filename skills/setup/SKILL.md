@@ -59,6 +59,22 @@ The directory `~/.claude/lcars/` is created automatically on first hook run. If 
 - Ensure the plugin files are intact (no missing `lib/*.py` modules)
 - Reinstall the plugin if files are missing
 
+### Tool-factory missing dependencies
+
+The tool-factory MCP server requires `mcp` and `anyio` Python packages. These are not bundled with the plugin because they are pip-installable packages that depend on the user's Python environment.
+
+If the check reports missing packages, offer to install them. Detect the best available installer:
+
+1. **`uv`:** `uv pip install --system -r ${CLAUDE_PLUGIN_ROOT}/tool_factory/requirements.txt` (or without `--system` if in a venv)
+2. **`pip`:** `pip install -r ${CLAUDE_PLUGIN_ROOT}/tool_factory/requirements.txt`
+3. **`pip3`:** `pip3 install -r ${CLAUDE_PLUGIN_ROOT}/tool_factory/requirements.txt`
+
+If the system Python is externally managed (Debian/Ubuntu) and `--system` fails, suggest:
+- `uv pip install --system --break-system-packages -r ${CLAUDE_PLUGIN_ROOT}/tool_factory/requirements.txt`
+- Or install into a user site: `pip install --user -r ${CLAUDE_PLUGIN_ROOT}/tool_factory/requirements.txt`
+
+After installing, the tool-factory server will connect on next plugin reload (`/reload-plugins`).
+
 ## Output Format
 
 Present as a compact diagnostic summary. No preambles. Data first.
