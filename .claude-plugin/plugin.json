@@ -1,10 +1,16 @@
 {
   "name": "lcars",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Self-correcting cognitive ergonomics for Claude Code",
   "author": {
     "name": "Lionel Di Giacomo"
   },
   "repository": "https://github.com/melek/lcars",
-  "license": "MIT"
+  "license": "MIT",
+  "mcpServers": {
+    "tool-factory": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/tool_factory/server.py"]
+    }
+  }
 }
