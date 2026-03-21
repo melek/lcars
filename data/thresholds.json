@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "global": {
     "filler": 0,
     "preamble": 0,
@@ -11,6 +11,12 @@
     },
     "diagnostic": {
       "density": 0.55
+    },
+    "conversational": {
+      "density": 0.40
+    },
+    "directive": {
+      "density": 0.50
     }
   },
   "tool_fitness": {

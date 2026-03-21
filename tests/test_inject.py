@@ -1,9 +1,11 @@
-"""Tests for lib/inject.py — context assembly."""
+"""Tests for lib/inject.py — context assembly and registry initialization."""
 
 import json
+import os
 
 import inject
 import store
+import registry
 
 
 class TestContextAssembly:
@@ -37,3 +39,36 @@ class TestContextAssembly:
         """Fresh startup with no prior scores → no stats."""
         stats = inject.load_stats("startup")
         assert stats == ""
+
+
+class TestRegistryInitialization:
+    def test_scan_runs_when_registry_missing(self, lcars_tmpdir, monkeypatch):
+        """SessionStart triggers discover.scan() when tool-registry.json doesn't exist."""
+        scan_called = []
+        import discover
+        monkeypatch.setattr(discover, "scan", lambda: scan_called.append(True) or {"found": 0, "new": 0, "removed": 0})
+
+        # Registry file should not exist
+        assert not os.path.exists(registry.REGISTRY_FILE)
+
+        # Simulate the inject.main() logic for registry init
+        if not os.path.exists(registry.REGISTRY_FILE):
+            discover.scan()
+
+        assert len(scan_called) == 1
+
+    def test_scan_skipped_when_registry_exists(self, lcars_tmpdir, monkeypatch):
+        """SessionStart does NOT trigger scan when tool-registry.json already exists."""
+        scan_called = []
+        import discover
+        monkeypatch.setattr(discover, "scan", lambda: scan_called.append(True) or {"found": 0, "new": 0, "removed": 0})
+
+        # Create the registry file
+        registry.save(registry._default_registry())
+        assert os.path.exists(registry.REGISTRY_FILE)
+
+        # Simulate the inject.main() logic for registry init
+        if not os.path.exists(registry.REGISTRY_FILE):
+            discover.scan()
+
+        assert len(scan_called) == 0

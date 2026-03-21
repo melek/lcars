@@ -2,7 +2,8 @@
 """Deterministic query-type classifier.
 
 Classifies user prompts by structure and keywords. No LLM calls.
-Categories: factual, diagnostic, code, emotional, claim, ambiguous, meta.
+Categories: factual, diagnostic, code, emotional, claim, meta, directive,
+conversational, ambiguous (fallback).
 
 Hook mode (UserPromptSubmit): reads hook JSON from stdin, classifies prompt,
 writes classification to query-type.tmp for Stop hook to consume.
@@ -31,6 +32,8 @@ PATTERNS = {
         r"(?:not\s+working|broken|failing|error|bug|issue|problem|crash)",
         r"(?:what's\s+wrong|what\s+happened|how\s+to\s+fix|troubleshoot)",
         r"(?:doesn't\s+(?:work|compile|run|build|start|connect))",
+        r"(?:(?:getting|seeing|having)\s+(?:an?\s+)?(?:error|issue|problem|warning))",
+        r"(?:it\s+(?:keeps|just)\s+(?:failing|crashing|hanging|timing\s*out))",
     ],
     "claim": [
         r"(?:is\s+it\s+true|I\s+(?:heard|read|think|believe)\s+that)",
@@ -48,11 +51,27 @@ PATTERNS = {
         r"(?:tell\s+me\s+about\s+(?:yourself|your|this\s+(?:plugin|system)))",
         r"/\w+",  # slash commands
     ],
+    "directive": [
+        r"(?:^(?:do|run|deploy|review|check|update|set\s+up|configure|install|push|merge|rebase|commit)\b)",
+        r"(?:please\s+(?:do|run|help|check|look|find|update|fix|review|deploy|set\s+up|configure|install))",
+        r"(?:go\s+ahead|let's\s+(?:do|start|try|go))",
+        r"(?:can\s+you\s+(?:do|run|help|check|look|find|update|fix|review|deploy|set\s+up|configure|install))",
+        r"(?:(?:could|would)\s+you\s+(?:please\s+)?(?:do|run|help|check|look|find|update|fix|review|deploy))",
+    ],
     "factual": [
         r"(?:what\s+is|who\s+is|when\s+(?:did|was|is)|where\s+(?:is|are|was))",
         r"(?:how\s+(?:many|much|long|old|far|often))",
         r"(?:list\s+(?:the|all)|show\s+me|find\s+(?:the|all))",
         r"(?:look\s+up|search\s+for|check\s+(?:the|if|whether))",
+        r"(?:tell\s+me\s+about(?!\s+(?:yourself|your|this\s+(?:plugin|system))))",
+        r"(?:explain\s+(?:the|how|why|what))",
+        r"(?:describe\s+(?:the|how|what))",
+    ],
+    "conversational": [
+        r"(?:^(?:yes|no|ok|okay|sure|thanks|thank\s+you|got\s+it|makes\s+sense|sounds\s+good|perfect|agreed|exactly|right|correct|nope|nah)(?:\s|[.!,]|$))",
+        r"(?:^(?:and|but|also|what\s+about|how\s+about|actually)\b)",
+        r"(?:(?:thoughts|opinions?|ideas?)\s*\??\s*$)",
+        r"(?:(?:never\s*mind|forget\s+(?:it|that)|scratch\s+that))",
     ],
 }
 

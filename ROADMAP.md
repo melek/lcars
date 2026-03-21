@@ -47,6 +47,22 @@ The standalone tool-factory MCP server has been absorbed into the LCARS repo at 
 - **Tool lifecycle:** Tools are subject to the same fitness tracking as corrections (candidate → standard → promoted). Unused tools get archived.
 - **Safety:** Stage → approve gate is mandatory (NoAutoDeployment invariant). Foundry proposes tools, user approves via MCP call.
 
+## v0.6.4 — Classifier Discrimination & Correction Fitness (shipped)
+
+Dashboard review at 31 days (1,662 responses, 288 sessions) revealed three issues:
+
+### Classifier improvement
+Ambiguous query type dominated at 55% of classifications, inflating a heterogeneous catch-all. Added two new categories (`directive`, `conversational`) and expanded `factual` and `diagnostic` patterns. Ambiguous rate drops to ~13% on representative prompts. Dict order adjusted so `directive` breaks ties against `factual` for "can you X" patterns.
+
+### Correction fitness recovery
+Correction fitness declined from 90% → 76% week-over-week, concentrated in `ambiguous` + low-severity density corrections (65.6% effective). Root cause: the generic density correction was too vague for the heterogeneous ambiguous bucket. Fix: suppress low-severity density corrections for `ambiguous`, `conversational`, and `directive` query types. High-severity density corrections still fire for all query types.
+
+### Tool registry initialization (#15, #18)
+`tool-registry.json` was never created because `discover.scan()` only fired at ~5% probability during PreCompact. Added one-time initialization: SessionStart now calls `discover.scan()` when the registry file doesn't exist. Subsequent sessions skip the scan.
+
+### Threshold overrides
+Added query-type-specific density thresholds: `conversational` (0.40), `directive` (0.50). These join existing overrides for `code` (0.50) and `diagnostic` (0.55). Global density threshold (0.60) unchanged.
+
 ### Hybrid scoring implementation
 
 Implement the architecture from `docs/hybrid-scoring-design.md`:
