@@ -81,6 +81,10 @@ class TestQueryTypes:
     def test_factual_tell_me_about(self):
         assert classify("tell me about LCARS") == "factual"
 
+    def test_tell_me_about_system_is_meta(self):
+        """Negative lookahead: 'tell me about this system' → meta, not factual."""
+        assert classify("tell me about this system") == "meta"
+
     def test_factual_explain(self):
         assert classify("explain how hooks work") == "factual"
 
