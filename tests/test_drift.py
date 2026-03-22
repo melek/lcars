@@ -86,6 +86,61 @@ class TestAnswerPositionCoverage:
         assert "preamble" in result["correction"].lower() or "answer" in result["correction"].lower()
 
 
+class TestNewQueryTypeThresholds:
+    def test_conversational_density_threshold(self, tmp_path, monkeypatch):
+        """Conversational threshold is 0.40. Density 0.45 should NOT drift."""
+        import thresholds
+        monkeypatch.setattr(thresholds, "_runtime_path", lambda: str(tmp_path / "thresholds.json"))
+        score = {"padding_count": 0, "answer_position": 0, "info_density": 0.45}
+        result = detect(score, "conversational")
+        assert result is None
+
+    def test_directive_density_threshold(self, tmp_path, monkeypatch):
+        """Directive threshold is 0.50. Density 0.52 should NOT drift."""
+        import thresholds
+        monkeypatch.setattr(thresholds, "_runtime_path", lambda: str(tmp_path / "thresholds.json"))
+        score = {"padding_count": 0, "answer_position": 0, "info_density": 0.52}
+        result = detect(score, "directive")
+        assert result is None
+
+    def test_ambiguous_low_density_suppressed(self, tmp_path, monkeypatch):
+        """Ambiguous + low density should return empty correction (suppressed)."""
+        import thresholds
+        monkeypatch.setattr(thresholds, "_runtime_path", lambda: str(tmp_path / "thresholds.json"))
+        score = {"padding_count": 0, "answer_position": 0, "info_density": 0.58}
+        result = detect(score, "ambiguous")
+        assert result is not None
+        assert result["correction"] == ""
+
+    def test_conversational_low_density_suppressed(self, tmp_path, monkeypatch):
+        """Conversational + low density should return empty correction."""
+        import thresholds
+        monkeypatch.setattr(thresholds, "_runtime_path", lambda: str(tmp_path / "thresholds.json"))
+        score = {"padding_count": 0, "answer_position": 0, "info_density": 0.38}
+        result = detect(score, "conversational")
+        assert result is not None
+        assert result["correction"] == ""
+
+    def test_directive_low_density_suppressed(self, tmp_path, monkeypatch):
+        """Directive + low density should return empty correction."""
+        import thresholds
+        monkeypatch.setattr(thresholds, "_runtime_path", lambda: str(tmp_path / "thresholds.json"))
+        score = {"padding_count": 0, "answer_position": 0, "info_density": 0.48}
+        result = detect(score, "directive")
+        assert result is not None
+        assert result["correction"] == ""
+
+    def test_ambiguous_high_density_still_corrects(self, tmp_path, monkeypatch):
+        """Ambiguous + HIGH density drift should still correct."""
+        import thresholds
+        monkeypatch.setattr(thresholds, "_runtime_path", lambda: str(tmp_path / "thresholds.json"))
+        score = {"padding_count": 0, "answer_position": 0, "info_density": 0.45}
+        result = detect(score, "ambiguous")
+        assert result is not None
+        assert result["severity"] == "high"
+        assert result["correction"] != ""
+
+
 class TestCorrectionSelection:
     def test_filler_high_returns_template_with_placeholder(self):
         score = {"padding_count": 5, "answer_position": 0, "info_density": 0.70}

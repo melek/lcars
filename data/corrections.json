@@ -1,5 +1,5 @@
 {
-  "version": 13,
+  "version": 19,
   "strategies": [
     {
       "drift": "filler",
@@ -62,6 +62,27 @@
       "severity": "low",
       "query": "*",
       "template": "[Prior: drift on {reasons}. Correct.]"
+    },
+    {
+      "drift": "density",
+      "severity": "low",
+      "query": "ambiguous",
+      "template": "",
+      "note": "Ambiguous is a heterogeneous catch-all. Low-severity density corrections have 65% fitness \u2014 suppress to reduce noise."
+    },
+    {
+      "drift": "density",
+      "severity": "low",
+      "query": "conversational",
+      "template": "",
+      "note": "Conversational turns (yes, thanks, follow-ups) have inherently variable density. No correction."
+    },
+    {
+      "drift": "density",
+      "severity": "low",
+      "query": "directive",
+      "template": "",
+      "note": "Task directives naturally vary in density. No correction at low severity."
     },
     {
       "drift": "filler",

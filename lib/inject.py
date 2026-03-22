@@ -83,10 +83,12 @@ def main():
     if stats:
         parts.append(stats)
 
-    # Environment tools line for promoted discovered tools
+    # Environment tools: initialize registry on first run, then inject promoted tools
     try:
         import registry
         import discover
+        if not os.path.exists(registry.REGISTRY_FILE):
+            discover.scan()
         env_tools = [t for t in registry.list_by_provenance("discovered")
                      if t.get("status") == "active" and t.get("tier") == "promoted"]
         if env_tools:

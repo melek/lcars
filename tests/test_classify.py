@@ -48,6 +48,55 @@ class TestQueryTypes:
     def test_meta_slash_command(self):
         assert classify("/help") == "meta"
 
+    def test_directive_deploy(self):
+        assert classify("deploy this to staging") == "directive"
+
+    def test_directive_can_you(self):
+        assert classify("can you check the logs") == "directive"
+
+    def test_directive_lets(self):
+        assert classify("let's do it") == "directive"
+
+    def test_directive_please(self):
+        assert classify("please review this PR") == "directive"
+
+    def test_conversational_yes(self):
+        assert classify("yes") == "conversational"
+
+    def test_conversational_sounds_good(self):
+        assert classify("sounds good") == "conversational"
+
+    def test_conversational_thanks(self):
+        assert classify("thanks") == "conversational"
+
+    def test_conversational_what_about(self):
+        assert classify("what about X?") == "conversational"
+
+    def test_conversational_never_mind(self):
+        assert classify("never mind") == "conversational"
+
+    def test_conversational_thoughts(self):
+        assert classify("thoughts?") == "conversational"
+
+    def test_factual_tell_me_about(self):
+        assert classify("tell me about LCARS") == "factual"
+
+    def test_tell_me_about_system_is_meta(self):
+        """Negative lookahead: 'tell me about this system' → meta, not factual."""
+        assert classify("tell me about this system") == "meta"
+
+    def test_factual_explain(self):
+        assert classify("explain how hooks work") == "factual"
+
+    def test_factual_describe(self):
+        assert classify("describe the architecture") == "factual"
+
+    def test_diagnostic_getting_error(self):
+        assert classify("I'm getting an error when I run tests") == "diagnostic"
+
+    def test_diagnostic_keeps_crashing(self):
+        assert classify("it keeps crashing") == "diagnostic"
+
     def test_ambiguous_fallback(self):
         assert classify("thoughts on this?") == "ambiguous"
 
