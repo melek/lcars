@@ -1,46 +1,27 @@
 # LCARS
 
-A [Claude Code](https://claude.com/claude-code) plugin that reduces filler, preambles, and low-density responses.
-
-## The problem
-
-LLMs default to social interaction patterns: "Great question!", "I'd be happy to help!", sign-offs, hedging, and verbose padding. These patterns waste attention. Research shows that extraneous content increases cognitive load (Sweller, 1988), social framing disrupts task focus (Csikszentmihalyi, 1990), and simulated friendliness creates false trust signals (Bhat, 2025).
-
-System prompts help, but they decay over long conversations — the model drifts back toward trained defaults. A one-time instruction can't self-correct.
-
-## What LCARS does
-
-LCARS scores every Claude response for filler phrases, preamble length, and information density. When scores drift past thresholds, it injects a targeted correction into the next session's context. The correction is specific to what went wrong — filler gets a filler correction, not a generic "be concise."
-
-It runs entirely in the background. No user interaction required, no visible latency.
-
-### Before and after
+A [Claude Code](https://claude.com/claude-code) plugin that detects and corrects filler, preambles, and low-density responses automatically across conversations.
 
 | Without LCARS | With LCARS |
 |---|---|
 | "Great question! I'd be happy to help you with that. The capital of France is Paris. Let me know if you need anything else!" | "Paris." |
 
+## Why
+
+LLMs default to social interaction patterns: "Great question!", "I'd be happy to help!", sign-offs, hedging, and verbose padding. These patterns are distracting and even manipulative. System prompts help, but they decay over long conversations and the model drifts back toward trained defaults.
+
+LCARS scores every response and injects targeted corrections when drift is detected. It runs in the background with zero perceived latency.
+
 ## Install
 
 ```bash
-# In Claude Code CLI:
-/plugin marketplace add melek/lcars
-/plugin install lcars@melek-lcars
+claude plugins marketplace add melek/lcars
+claude plugins install lcars@melek-lcars
 ```
 
-Or load directly:
-
-```bash
-claude --plugin-dir /path/to/lcars
-```
+Verify: `/lcars:setup`
 
 ## How it works
-
-1. **Anchor** — Every session starts with a ~50-token behavioral anchor: answer first, no filler, no affect simulation.
-2. **Classify** — Each user query is classified by type (factual, code, diagnostic, etc.) so thresholds adjust appropriately. A verbose code explanation isn't a problem; a verbose "what time is it" is.
-3. **Score** — After each response, LCARS scores it: filler phrase count, preamble word position, information density (content words / total words).
-4. **Detect drift** — Scores are checked against query-type-aware thresholds. Code responses have a lower density threshold (variable names reduce density naturally). Factual responses are held to a higher standard.
-5. **Correct** — If drift is detected, a correction strategy is selected from a decision table keyed by drift type, severity, and query type. The correction is injected at the start of the next session.
 
 ```
 User query ──→ classify (async) ──→ query type saved
@@ -53,11 +34,14 @@ Claude responds ──→ score (async) ──→ scores.jsonl
                                    correction selected
                                    from decision table
                                         │
-Next session ──→ inject ──→ anchor + correction
-                            via additionalContext
+Next user message ──→ correction injected via additionalContext
 ```
 
-All scoring and classification hooks are async — zero perceived latency.
+1. **Anchor** — Every session starts with a ~50-token behavioral anchor: answer first, no filler, no affect simulation.
+2. **Classify** — Each user query is classified by type (factual, code, diagnostic, directive, conversational, etc.) so thresholds adjust appropriately.
+3. **Score** — After each response: filler phrase count, preamble word position, information density.
+4. **Detect drift** — Scores are checked against query-type-aware thresholds. Code responses have a lower density bar; factual responses are held to a higher standard.
+5. **Correct** — If drift is detected, a correction is injected on the user's next message within the same session.
 
 ### What gets scored
 
@@ -74,13 +58,16 @@ All scoring and classification hooks are async — zero perceived latency.
 | Default | 0.60 | Research-validated baseline |
 | Code | 0.50 | Variable names and syntax naturally lower density |
 | Diagnostic | 0.55 | Step-by-step explanation is appropriate |
+| Directive | 0.50 | Task commands vary in density |
+| Conversational | 0.40 | Follow-ups and acknowledgments are inherently terse |
 
-### Drift severity and corrections
+### Corrections
 
-Drift is classified as **low** (marginal, single dimension) or **high** (far from threshold, or multiple dimensions). The correction decision table (`data/corrections.json`) maps drift type × severity × query type to specific correction templates:
+Drift is classified as **low** or **high** severity. The decision table (`data/corrections.json`) maps drift type × severity × query type to correction templates:
 
 - Filler detected → "Prior response contained filler. Omit."
 - Low density on a code query → no correction (expected)
+- Low density on an ambiguous query → no correction (too heterogeneous to correct reliably)
 - Compound high drift → full behavioral reset
 
 ### Context budget
@@ -93,30 +80,21 @@ Drift is classified as **low** (marginal, single dimension) or **high** (far fro
 
 Typical cost: **~50 tokens/session**.
 
-## Design goals
-
-1. **Ready-to-hand** — the assistant is a transparent tool, not a social entity
-2. **Zero attention tax** — nothing in the response forces a context switch from your task
-3. **Self-correcting** — drift detected and corrected without user intervention
-4. **Calm by default** — the plugin's own operations are minimal and non-intrusive
-5. **Recursive ergonomics** — the plugin applies its own cognitive load standards to itself
-
 ## Foundry
 
-LCARS includes a self-contained strategy crystallization system inspired by [OpenClaw](https://github.com/openclaw)'s Foundry pattern. Instead of creating external tools, it crystallizes observations into its own correction strategies.
+A self-contained strategy crystallization system. Instead of requiring manual tuning, LCARS observes its own correction effectiveness and proposes improvements.
 
-The flow: **observe → validate → crystallize → stage → approve**.
+**observe → validate → crystallize → stage → approve**
 
 1. Scoring and drift data accumulate over sessions
-2. The PreCompact hook consolidates session summaries and identifies recurring patterns
-3. Overfit gates prevent premature crystallization: a pattern must appear in **5+ sessions** across **3+ calendar days**
-4. The Foundry analyzes validated patterns against correction effectiveness and proposes new or refined strategies
-5. Proposals are staged — never auto-applied. Run `/lcars:foundry` to review and approve.
+2. The PreCompact hook consolidates summaries and identifies recurring patterns
+3. Overfit gates prevent premature crystallization: **5+ sessions** across **3+ calendar days**
+4. The Foundry proposes new or refined strategies based on correction fitness
+5. Proposals are staged — never auto-applied. Review with `/lcars:foundry`
 
-Three proposal types:
-- **Gap**: a validated drift pattern has no query-type-specific strategy (e.g., filler drift on emotional queries keeps firing but the generic correction doesn't help)
-- **Refinement**: an existing strategy has low fitness (< 50% effective) for a specific query type
-- **Suppression**: a strategy fires in > 30% of sessions but rarely improves the targeted dimension
+## Tool Registry
+
+LCARS discovers CLI tools in your environment (jq, rg, gh, etc.) and tracks their usage. Discovered tools can be promoted into session context so the model knows what's available. The registry initializes automatically on first session.
 
 ## Skills
 
@@ -124,68 +102,48 @@ Three proposal types:
 |---|---|
 | `/lcars:dashboard` | Scoring stats, drift history, correction fitness, active patterns |
 | `/lcars:calibrate` | Propose threshold adjustments from evidence (human-approved) |
-| `/lcars:consolidate` | Manually trigger pattern consolidation |
 | `/lcars:foundry` | Review and apply staged strategy proposals |
+| `/lcars:discover` | Scan environment for CLI tools, show registry status |
 | `/lcars:deep-eval` | On-demand LLM-as-judge evaluation against structured rubric |
 | `/lcars:fmea` | Interactive failure mode analysis for response breakdowns |
+| `/lcars:consolidate` | Manually trigger pattern consolidation |
 | `/lcars:setup` | Validate installation and diagnose issues |
 
 ## Architecture
 
 ```
 lib/
-├── score.py        # Deterministic scoring (24 filler patterns, 20 preamble regexes)
-├── store.py        # JSONL ledger, rotation, rolling stats
-├── inject.py       # Context assembly (anchor + correction + stats)
-├── drift.py        # Drift detection, severity, correction strategy selection
-├── classify.py     # Deterministic query-type classifier (no LLM calls)
-├── fitness.py      # Correction effectiveness tracking
-├── consolidate.py  # Session summary extraction + pattern consolidation
-├── foundry.py      # Strategy crystallization from validated patterns
-├── observe.py      # PostToolUse + SubagentStart logger (silent, async)
-├── thresholds.py   # Query-type-aware threshold management
-├── transcript.py   # Transcript parsing utilities
-├── compat.py       # Cross-platform file locking (macOS/Linux/Windows)
-└── setup.py        # Installation diagnostics (/lcars:setup)
+├── score.py          # Deterministic scoring (24 filler patterns, 20 preamble regexes)
+├── classify.py       # Query-type classifier (9 categories, no LLM calls)
+├── drift.py          # Drift detection, severity, correction strategy selection
+├── inject.py         # Context assembly (anchor + correction + stats + env tools)
+├── fitness.py        # Correction effectiveness tracking
+├── thresholds.py     # Query-type-aware threshold management
+├── store.py          # JSONL ledger, rotation, rolling stats
+├── consolidate.py    # Session summary extraction + pattern consolidation
+├── foundry.py        # Strategy crystallization from validated patterns
+├── registry.py       # Unified tool registry (discovered + crystallized + user tools)
+├── discover.py       # Environment tool discovery against curated allowlist
+├── tool_fitness.py   # Tool promotion/demotion lifecycle
+├── observe.py        # PostToolUse + SubagentStart logger (silent, async)
+├── staging.py        # Foundry proposal staging for user approval
+├── transcript.py     # Transcript parsing utilities
+├── compat.py         # Cross-platform file locking (macOS/Linux/Windows)
+└── setup.py          # Installation diagnostics
+
+tool_factory/
+└── server.py         # MCP server: dynamic tool creation/execution
 
 bin/
-└── python-shim.sh  # Cross-platform Python resolver (POSIX)
+└── python-shim.sh    # Cross-platform Python resolver (POSIX)
 
-skills/
-├── dashboard/      # /lcars:dashboard
-├── calibrate/      # /lcars:calibrate
-├── consolidate/    # /lcars:consolidate
-├── foundry/        # /lcars:foundry
-├── deep-eval/      # /lcars:deep-eval (LLM-as-judge)
-├── fmea/           # /lcars:fmea (failure mode analysis)
-└── setup/          # /lcars:setup (installation diagnostics)
-
+skills/               # 8 interactive skills (see table above)
 agents/
-└── eval.md         # Autonomous evaluation agent (read-only)
-
-tests/              # 107 unit + integration tests (pytest)
-
-docs/
-├── methodology.md              # Design methodology (research basis, evaluation results)
-└── cognitive-ergonomics-primer.html  # Interactive primer (standalone, open in browser)
+└── eval.md           # Autonomous evaluation agent (read-only)
+tests/                # 212 tests (pytest)
 ```
 
-Runtime data: `~/.claude/lcars/`
-
-```
-~/.claude/lcars/
-├── scores.jsonl                    # Score ledger (weekly rotation)
-├── drift.json                      # Ephemeral drift flag (consumed on read)
-├── drift-events.jsonl              # Persistent drift event log
-├── thresholds.json                 # Active thresholds
-├── query-type.tmp                  # Current query classification
-├── pending-correction.json         # Correction awaiting effectiveness evaluation
-└── memory/
-    ├── session-summaries.jsonl     # Per-session summaries (30-day window)
-    ├── patterns.json               # Consolidated recurring patterns
-    ├── correction-outcomes.jsonl   # Correction → result pairs for fitness
-    └── staged-strategies.json      # Foundry proposals awaiting approval
-```
+Runtime data lives at `~/.claude/lcars/` — scores, drift events, correction outcomes, session summaries, patterns, thresholds, and tool registry.
 
 ## Standalone scoring
 
@@ -209,23 +167,19 @@ echo "Great question! I'd be happy to help." | python3 lib/score.py
 python3 -m pytest tests/ -v
 ```
 
-107 tests covering: scoring accuracy, word boundary enforcement, query classification, drift detection, severity classification, correction strategy selection, fitness tracking, overfit gates, session segmentation, segment-based consolidation, foundry proposals, context assembly, data operations, installation diagnostics, end-to-end correction loop, and graceful degradation.
+212 tests covering scoring accuracy, query classification, drift detection, correction strategy selection, fitness tracking, pattern consolidation, foundry proposals, tool registry, environment discovery, context assembly, and end-to-end correction loops.
 
-## Design rationale
+## Design
 
-See [DESIGN.md](DESIGN.md) for the recursive ergonomics framework — applying cognitive load theory to the LLM's own context constraints (attention sinks, lost-in-the-middle effects, context rot).
-
-## Documentation
-
-- [docs/methodology.md](docs/methodology.md) — Design methodology, research basis (35 citations), evaluation results across 48 queries
-- [docs/cognitive-ergonomics-primer.html](docs/cognitive-ergonomics-primer.html) — Interactive primer on cognitive ergonomics from first principles (open in browser)
-- [docs/hybrid-scoring-design.md](docs/hybrid-scoring-design.md) — Design for hybrid regex + LLM-as-judge scoring
-- [docs/epistemic-adequacy-design.md](docs/epistemic-adequacy-design.md) — Design for epistemic adequacy detection
-- [DESIGN.md](DESIGN.md) — Recursive ergonomics: the Sweller CLT → LLM mapping
+- [DESIGN.md](DESIGN.md) — Recursive ergonomics: applying cognitive load theory to both the user's attention and the model's context window
+- [docs/methodology.md](docs/methodology.md) — Design methodology, 35 research citations, evaluation results across 48 queries
+- [docs/cognitive-ergonomics-primer.html](docs/cognitive-ergonomics-primer.html) — Interactive primer (open in browser)
+- [docs/hybrid-scoring-design.md](docs/hybrid-scoring-design.md) — Design for hybrid regex + LLM-as-judge scoring (planned)
+- [docs/epistemic-adequacy-design.md](docs/epistemic-adequacy-design.md) — Design for epistemic adequacy detection (planned)
 
 ## Research basis
 
-Grounded in cognitive load theory (Sweller, 1988), tool transparency (Winograd & Flores, 1986), calm technology (Weiser & Brown, 1996), organizational ergonomics (Hendrick & Kleiner, 2002), sycophancy characterization (Sharma et al., ICLR 2024), verbosity taxonomy (Zhang et al., 2024), sycophancy decomposition (Vennemeyer et al., 2025), and empirical evaluation across 48 queries. Full methodology and bibliography: [docs/methodology.md](docs/methodology.md).
+Grounded in cognitive load theory (Sweller, 1988), tool transparency (Winograd & Flores, 1986), calm technology (Weiser & Brown, 1996), sycophancy characterization (Sharma et al., ICLR 2024), verbosity taxonomy (Zhang et al., 2024), sycophancy decomposition (Vennemeyer et al., 2025), and empirical evaluation across 48 queries. Full bibliography in [docs/methodology.md](docs/methodology.md).
 
 ## Requirements
 
