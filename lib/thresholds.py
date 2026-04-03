@@ -7,6 +7,7 @@ Falls back to data/thresholds.json (shipped defaults) on first run.
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
 
 
@@ -16,7 +17,9 @@ def _plugin_root():
 
 
 def _runtime_path():
-    return os.path.join(os.path.expanduser("~"), ".claude", "lcars", "thresholds.json")
+    sys.path.insert(0, str(Path(__file__).parent))
+    from compat import lcars_dir
+    return os.path.join(lcars_dir(), "thresholds.json")
 
 
 def _default_path():

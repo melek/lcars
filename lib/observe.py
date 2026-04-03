@@ -12,10 +12,12 @@ import sys
 import time
 
 
+sys.path.insert(0, os.path.dirname(__file__))
+from compat import lcars_dir
+
+
 def _tool_log_path():
-    lcars_dir = os.path.join(os.path.expanduser("~"), ".claude", "lcars")
-    os.makedirs(lcars_dir, exist_ok=True)
-    return os.path.join(lcars_dir, "tool-usage.jsonl")
+    return os.path.join(lcars_dir(), "tool-usage.jsonl")
 
 
 def _extract_executables(command: str) -> list[str]:
@@ -75,7 +77,6 @@ def hook_main():
 
     # Update registry usage counters if tool is tracked
     try:
-        sys.path.insert(0, os.path.dirname(__file__))
         import registry
         ok = entry["ok"]
 

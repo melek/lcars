@@ -107,9 +107,8 @@ def classify(prompt: str) -> str:
 
 def _query_type_path():
     """Path to the ephemeral query-type file."""
-    lcars_dir = os.path.join(os.path.expanduser("~"), ".claude", "lcars")
-    os.makedirs(lcars_dir, exist_ok=True)
-    return os.path.join(lcars_dir, "query-type.tmp")
+    from compat import lcars_dir
+    return os.path.join(lcars_dir(), "query-type.tmp")
 
 
 def write_classification(query_type: str):

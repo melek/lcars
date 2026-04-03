@@ -34,6 +34,7 @@ def check_python() -> dict:
 
 def check_dirs() -> dict:
     """Verify ~/.claude/lcars/ exists and is writable."""
+    # Compute path without creating — this is a diagnostic check
     lcars = os.path.join(os.path.expanduser("~"), ".claude", "lcars")
     if not os.path.isdir(lcars):
         return {
@@ -56,7 +57,8 @@ def check_dirs() -> dict:
 
 def check_scores() -> dict:
     """Verify scores.jsonl exists with recent entries (< 24h)."""
-    scores = os.path.join(os.path.expanduser("~"), ".claude", "lcars", "scores.jsonl")
+    from compat import lcars_dir
+    scores = os.path.join(lcars_dir(), "scores.jsonl")
     if not os.path.isfile(scores):
         return {
             "name": "scores",
