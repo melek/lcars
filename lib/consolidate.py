@@ -174,6 +174,39 @@ def extract_session_summary(scores_file: str) -> dict | None:
     }
 
 
+def summarize_previous_session(scores_path: str | None = None) -> dict | None:
+    """Summarize the most recent complete session and cache it.
+
+    Called by SessionStart after writing the new session marker.
+    The just-started session has no scores yet, so _segment_sessions_with_keys
+    excludes it — the previous session is result[-1].
+    """
+    if scores_path is None:
+        scores_path = SCORES_FILE
+
+    keyed = _segment_sessions_with_keys(scores_path)
+    if not keyed:
+        return None
+
+    marker_epoch, segment = keyed[-1]
+
+    # Epoch-0 segments are pre-first-marker scores — not real sessions
+    if marker_epoch <= 0:
+        return None
+
+    # Already cached — skip to prevent duplicates on resume/compact
+    if marker_epoch in _load_cached_epochs():
+        return None
+
+    summary = summarize_session(segment)
+    if not summary or not summary.get("responses"):
+        return None
+
+    cache_entry = {**summary, "_marker_epoch": marker_epoch}
+    append_summary(cache_entry)
+    return summary
+
+
 def append_summary(summary: dict):
     """Append a session summary to the summaries ledger."""
     with open(SUMMARIES_FILE, "a") as f:
@@ -364,37 +397,61 @@ def rotate_summaries():
         file_unlock(f)
 
 
-def hook_main():
-    """PreCompact hook: extract session summary before context loss."""
-    scores_file = SCORES_FILE
+def run_learning_pass(scores_path: str | None = None) -> dict | None:
+    """Run the full learning pipeline: consolidation, foundry, fitness, discovery.
 
-    summary = extract_session_summary(scores_file)
-    if summary:
-        append_summary(summary)
-
-    # Amortized rotation + consolidation + foundry (~10% of compactions)
+    Called by the Stop hook (amortized) and PreCompact hook. Extracted so both
+    hooks can trigger learning without duplicating logic.
+    """
     import random
-    if random.random() < 0.1:
-        rotate_summaries()
-        result = consolidate()
-        # If consolidation produced validated patterns, run foundry analysis
-        if result.get("status") == "consolidated" and result.get("patterns_validated", 0) > 0:
+
+    rotate_summaries()
+    result = consolidate(scores_path)
+
+    # If consolidation produced validated patterns, run foundry analysis
+    if result.get("status") == "consolidated" and result.get("patterns_validated", 0) > 0:
+        try:
             from foundry import analyze
             analyze()
-        # Recompute tool fitness
-        try:
-            from tool_fitness import recompute
-            recompute()
         except Exception:
             pass
 
-    # Amortized environment scan (~5% of compactions)
+    # Recompute tool fitness
+    try:
+        from tool_fitness import recompute
+        recompute()
+    except Exception:
+        pass
+
+    # Amortized environment scan (~5% of learning passes)
     if random.random() < 0.05:
         try:
             from discover import scan
             scan()
         except Exception:
             pass
+
+    return result
+
+
+def hook_main():
+    """PreCompact hook: extract session summary before context loss."""
+    scores_file = SCORES_FILE
+
+    # Safety net: extract 2hr window summary before compaction.
+    # This may overlap with the marker-based summary from SessionStart's
+    # summarize_previous_session(). The two use different keying:
+    # - SessionStart writes with _marker_epoch (deduplicated by consolidate())
+    # - This writes without _marker_epoch (time-window heuristic, best-effort)
+    # Accepted: a session may get two summary entries. consolidate() uses
+    # scores.jsonl segments as primary data, so cached summary duplicates
+    # have no effect on pattern validation.
+    summary = extract_session_summary(scores_file)
+    if summary:
+        append_summary(summary)
+
+    # Always run learning pass on PreCompact — it's already rare
+    run_learning_pass()
 
 
 if __name__ == "__main__":

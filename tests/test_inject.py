@@ -41,6 +41,35 @@ class TestContextAssembly:
         assert stats == ""
 
 
+class TestPreviousSessionSummary:
+    def _run_inject_main(self, monkeypatch, capsys):
+        import io
+        monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps({"source": "startup"})))
+        inject.main()
+        return capsys.readouterr()
+
+    def test_session_start_calls_summarize_previous(self, lcars_tmpdir, monkeypatch, capsys):
+        """SessionStart calls summarize_previous_session after writing marker."""
+        summarize_called = []
+        import consolidate
+        monkeypatch.setattr(consolidate, "summarize_previous_session",
+                            lambda *a, **kw: summarize_called.append(True))
+
+        self._run_inject_main(monkeypatch, capsys)
+        assert len(summarize_called) == 1
+
+    def test_session_start_survives_summarize_failure(self, lcars_tmpdir, monkeypatch, capsys):
+        """SessionStart still produces output if summarize_previous_session raises."""
+        import consolidate
+        monkeypatch.setattr(consolidate, "summarize_previous_session",
+                            lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("test")))
+
+        captured = self._run_inject_main(monkeypatch, capsys)
+        # Should still produce anchor output despite the error
+        output = json.loads(captured.out)
+        assert "additionalContext" in output["hookSpecificOutput"]
+
+
 class TestRegistryInitialization:
     def _run_inject_main(self, monkeypatch, capsys):
         """Run inject.main() with stdin mocked to provide hook JSON."""

@@ -188,6 +188,14 @@ def hook_main():
     if random.random() < 0.01:
         rotate_store()
 
+    # Amortized learning pass (~5% of responses)
+    if random.random() < 0.05:
+        try:
+            from consolidate import run_learning_pass
+            run_learning_pass()
+        except Exception:
+            pass
+
 
 if __name__ == "__main__":
     if "--hook" in sys.argv:

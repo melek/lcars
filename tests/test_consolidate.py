@@ -131,6 +131,138 @@ class TestSessionSummaryExtraction:
         assert "filler" in summary["drift_types"]
 
 
+class TestSummarizePreviousSession:
+    def test_no_segments(self, lcars_tmpdir):
+        """Empty scores.jsonl -> None."""
+        result = consolidate.summarize_previous_session()
+        assert result is None
+
+    def test_single_segment_epoch_zero(self, lcars_tmpdir):
+        """Pre-marker scores only (epoch 0) -> None."""
+        now = time.time()
+        entries = [
+            {"epoch": now - 100, "padding_count": 1, "info_density": 0.5, "query_type": "factual"},
+        ]
+        with open(consolidate.SCORES_FILE, "a") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+
+        result = consolidate.summarize_previous_session()
+        assert result is None
+
+    def test_summarizes_last_complete_session(self, lcars_tmpdir):
+        """Two markers with scores, trailing empty marker -> summarizes previous."""
+        now = time.time()
+        entries = [
+            {"type": "session_start", "epoch": now - 3000, "source": "startup"},
+            {"epoch": now - 2900, "padding_count": 2, "info_density": 0.5, "query_type": "factual"},
+            {"epoch": now - 2800, "padding_count": 0, "info_density": 0.7, "query_type": "code"},
+            # New session starts — previous session is now complete
+            {"type": "session_start", "epoch": now - 1000, "source": "startup"},
+        ]
+        with open(consolidate.SCORES_FILE, "a") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+
+        result = consolidate.summarize_previous_session()
+        assert result is not None
+        assert result["responses"] == 2
+        assert "filler" in result["drift_types"]
+
+        # Verify it was written to cache
+        import os
+        assert os.path.exists(consolidate.SUMMARIES_FILE)
+        with open(consolidate.SUMMARIES_FILE) as f:
+            cached = [json.loads(line) for line in f if line.strip()]
+        assert len(cached) == 1
+        assert cached[0]["_marker_epoch"] == now - 3000
+
+    def test_already_cached_skips(self, lcars_tmpdir):
+        """Pre-cached marker epoch -> None (no duplicate)."""
+        now = time.time()
+        marker_epoch = now - 3000
+        entries = [
+            {"type": "session_start", "epoch": marker_epoch, "source": "startup"},
+            {"epoch": now - 2900, "padding_count": 0, "info_density": 0.6, "query_type": "factual"},
+            {"type": "session_start", "epoch": now - 1000, "source": "startup"},
+        ]
+        with open(consolidate.SCORES_FILE, "a") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+
+        # Pre-cache the marker epoch
+        consolidate.append_summary({"epoch": now, "_marker_epoch": marker_epoch, "responses": 1})
+
+        result = consolidate.summarize_previous_session()
+        assert result is None
+
+    def test_empty_previous_session(self, lcars_tmpdir):
+        """Consecutive markers (empty session) -> None."""
+        now = time.time()
+        entries = [
+            {"type": "session_start", "epoch": now - 3000, "source": "startup"},
+            # No scores between markers
+            {"type": "session_start", "epoch": now - 1000, "source": "startup"},
+        ]
+        with open(consolidate.SCORES_FILE, "a") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+
+        result = consolidate.summarize_previous_session()
+        assert result is None
+
+
+class TestRunLearningPass:
+    def _make_session_entries(self, epoch, n_scores=3):
+        entries = [{"type": "session_start", "epoch": epoch, "source": "startup"}]
+        for i in range(n_scores):
+            entries.append({
+                "epoch": epoch + (i + 1) * 10,
+                "padding_count": 2,
+                "answer_position": 0,
+                "info_density": 0.55,
+                "query_type": "factual",
+            })
+        return entries
+
+    def test_runs_consolidation(self, lcars_tmpdir):
+        """5+ sessions across 3+ days -> consolidated result."""
+        now = time.time()
+        all_entries = []
+        for i in range(5):
+            epoch = now - (i + 1) * 86400
+            all_entries.extend(self._make_session_entries(epoch))
+
+        with open(consolidate.SCORES_FILE, "a") as f:
+            for e in all_entries:
+                f.write(json.dumps(e) + "\n")
+
+        result = consolidate.run_learning_pass()
+        assert result is not None
+        assert result["status"] == "consolidated"
+        assert result["patterns_validated"] >= 1
+
+    def test_handles_import_errors(self, lcars_tmpdir, monkeypatch):
+        """Gracefully handles missing foundry/tool_fitness modules."""
+        now = time.time()
+        all_entries = []
+        for i in range(5):
+            epoch = now - (i + 1) * 86400
+            all_entries.extend(self._make_session_entries(epoch))
+
+        with open(consolidate.SCORES_FILE, "a") as f:
+            for e in all_entries:
+                f.write(json.dumps(e) + "\n")
+
+        # Make foundry.analyze raise an error
+        import foundry
+        monkeypatch.setattr(foundry, "analyze", lambda: (_ for _ in ()).throw(RuntimeError("test")))
+
+        # Should complete without exception
+        result = consolidate.run_learning_pass()
+        assert result is not None
+
+
 def _write_raw_entries(path, entries):
     """Write raw JSONL entries (scores + markers) to a file."""
     with open(path, "a") as f:

@@ -73,6 +73,13 @@ def main():
     # Log session boundary with version
     append_session_marker(source, version=_plugin_version())
 
+    # Summarize the previous session (deterministic, <1s)
+    try:
+        from consolidate import summarize_previous_session
+        summarize_previous_session()
+    except Exception:
+        pass  # Non-critical — don't block session start
+
     parts = []
 
     anchor = load_anchor()
