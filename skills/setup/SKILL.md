@@ -28,6 +28,7 @@ sh ${CLAUDE_PLUGIN_ROOT}/bin/python-shim.sh ${CLAUDE_PLUGIN_ROOT}/lib/setup.py
 | imports | pass/fail | module availability |
 | scoring | pass/fail/warn | pipeline test result |
 | tool-factory | pass/fail/warn | MCP server config |
+| hybrid | pass/info | LLM judge availability |
 
 3. For any failures, provide platform-specific remediation:
 
@@ -74,6 +75,12 @@ If the system Python is externally managed (Debian/Ubuntu) and `--system` fails,
 - Or install into a user site: `pip install --user -r ${CLAUDE_PLUGIN_ROOT}/tool_factory/requirements.txt`
 
 After installing, the tool-factory server will connect on next plugin reload (`/reload-plugins`).
+
+### Hybrid scoring not configured
+
+Hybrid scoring is optional. When `ANTHROPIC_API_KEY` is set in the environment, LCARS uses a Haiku judge to evaluate borderline responses on 4 rubric dimensions. Without the key, all scoring is deterministic (the default).
+
+To enable: `export ANTHROPIC_API_KEY=sk-ant-...` in your shell profile.
 
 ## Output Format
 

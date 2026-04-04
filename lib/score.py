@@ -172,6 +172,24 @@ def hook_main():
     store_score = {k: v for k, v in score.items() if k != "filler_phrases"}
     query_type = read_classification()
     store_score["query_type"] = query_type
+
+    # Hybrid scoring: optional LLM judge escalation
+    try:
+        from judge import judge_config, should_escalate, call_judge
+        jconf = judge_config()
+        if jconf:
+            escalate, reason = should_escalate(score, query_type)
+            if escalate:
+                judge_result = call_judge(text, score, query_type, jconf)
+                if judge_result:
+                    for dim in ("SyA", "VDet", "EpAd", "EPad"):
+                        store_score[f"judge_{dim}"] = judge_result[dim]
+                    store_score["judge_model"] = judge_result.get("model", "")
+                    store_score["judge_latency_ms"] = judge_result.get("latency_ms", 0)
+                    store_score["judge_reason"] = reason
+    except Exception:
+        pass  # Deterministic scoring proceeds regardless
+
     append_score(store_score)
 
     # Evaluate pending correction (if any) before new drift detection
@@ -179,6 +197,16 @@ def hook_main():
 
     # Query-type-aware drift detection
     drift_result = detect_drift(score, query_type)
+
+    # Monotonic enhancement: judge can elevate severity, never suppress
+    if drift_result and "judge_SyA" in store_score:
+        try:
+            from drift import elevate_severity
+            judge_scores = {d: store_score[f"judge_{d}"] for d in ("SyA", "VDet", "EpAd", "EPad")}
+            drift_result = elevate_severity(drift_result, judge_scores)
+        except Exception:
+            pass
+
     if drift_result:
         append_drift_event(drift_result)
         write_drift_flag(drift_result)

@@ -204,6 +204,22 @@ def check_tool_factory() -> dict:
     }
 
 
+def check_hybrid_scoring() -> dict:
+    """Check whether hybrid scoring (LLM judge) is available."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    if not api_key:
+        return {
+            "name": "hybrid",
+            "status": "info",
+            "detail": "No ANTHROPIC_API_KEY — deterministic-only mode (set key to enable LLM judge)",
+        }
+    return {
+        "name": "hybrid",
+        "status": "pass",
+        "detail": "API key configured, hybrid scoring available",
+    }
+
+
 def run_all_checks() -> list[dict]:
     """Run all diagnostic checks and return results."""
     return [
@@ -214,10 +230,11 @@ def run_all_checks() -> list[dict]:
         check_imports(),
         check_scoring(),
         check_tool_factory(),
+        check_hybrid_scoring(),
     ]
 
 
-STATUS_SYMBOLS = {"pass": "+", "fail": "X", "warn": "!"}
+STATUS_SYMBOLS = {"pass": "+", "fail": "X", "warn": "!", "info": "-"}
 
 
 if __name__ == "__main__":

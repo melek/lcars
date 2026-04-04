@@ -112,6 +112,19 @@ def _classify_severity(score: dict, categories: list, density_threshold: float) 
     return "low"
 
 
+def elevate_severity(drift_result: dict | None, judge_scores: dict) -> dict | None:
+    """Monotonic severity enhancement from judge scores.
+
+    If any judge dimension >= 2 and current severity is "low", elevates to "high".
+    Categories and correction template are never modified.
+    """
+    if not drift_result:
+        return None
+    if drift_result["severity"] == "low" and any(v >= 2 for v in judge_scores.values()):
+        drift_result["severity"] = "high"
+    return drift_result
+
+
 def _select_correction(drift_type: str, severity: str, query_type: str,
                        score: dict, reasons: list) -> str:
     """Select correction template from the decision table and format it."""

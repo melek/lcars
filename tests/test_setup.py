@@ -121,8 +121,8 @@ class TestRunAllChecks:
     def test_returns_proper_format(self):
         results = setup.run_all_checks()
         assert isinstance(results, list)
-        assert len(results) == 7
+        assert len(results) == 8
         for r in results:
             assert "name" in r
-            assert r["status"] in ("pass", "fail", "warn")
+            assert r["status"] in ("pass", "fail", "warn", "info")
             assert "detail" in r
