@@ -52,10 +52,10 @@ PATTERNS = {
         r"/\w+",  # slash commands
     ],
     "directive": [
-        r"(?:^(?:do|run|deploy|review|check|update|set\s+up|configure|install|push|merge|rebase|commit)\b)",
+        r"(?:^(?:do|run|deploy|review|check|update|set\s+up|configure|install|push|merge|rebase|commit|open|close|rename|move|swap)\b)",
         r"(?:please\s+(?:do|run|help|check|look|find|update|fix|review|deploy|set\s+up|configure|install))",
         r"(?:go\s+ahead|let's\s+(?:do|start|try|go))",
-        r"(?:can\s+you\s+(?:do|run|help|check|look|find|update|fix|review|deploy|set\s+up|configure|install))",
+        r"(?:can\s+(?:you|we)\s+(?:do|run|help|check|look|find|update|fix|review|deploy|set\s+up|configure|install|get|add|use))",
         r"(?:(?:could|would)\s+you\s+(?:please\s+)?(?:do|run|help|check|look|find|update|fix|review|deploy))",
     ],
     "factual": [
@@ -66,10 +66,12 @@ PATTERNS = {
         r"(?:tell\s+me\s+about(?!\s+(?:yourself|your|this\s+(?:plugin|system))))",
         r"(?:explain\s+(?:the|how|why|what))",
         r"(?:describe\s+(?:the|how|what))",
+        r"(?:(?:is|are)\s+there\s+(?:a|an|any)\b)",
+        r"(?:(?:do|does|did)\s+(?:we|you|I|it|this|that)\s+(?:need|have|want|require|support))",
     ],
     "conversational": [
-        r"(?:^(?:yes|no|ok|okay|sure|thanks|thank\s+you|got\s+it|makes\s+sense|sounds\s+good|perfect|agreed|exactly|right|correct|nope|nah)(?:\s|[.!,]|$))",
-        r"(?:^(?:and|but|also|what\s+about|how\s+about|actually)\b)",
+        r"(?:^(?:yes|no|ok|okay|sure|thanks|thank\s+you|got\s+it|makes\s+sense|sounds\s+good|perfect|agreed|exactly|right|correct|nope|nah|great|nice|cool|alright|awesome)(?:\s|[.!,]|$))",
+        r"(?:^(?:and|but|also|so|well|now|then|anyway|what\s+about|how\s+about|actually|hmm|ah|oh|sorry)(?:\s|[.!,]|$))",
         r"(?:(?:thoughts|opinions?|ideas?)\s*\??\s*$)",
         r"(?:(?:never\s*mind|forget\s+(?:it|that)|scratch\s+that))",
     ],

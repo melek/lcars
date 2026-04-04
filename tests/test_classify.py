@@ -101,7 +101,25 @@ class TestQueryTypes:
         assert classify("thoughts on this?") == "ambiguous"
 
     def test_ambiguous_minimal(self):
-        assert classify("hmm") == "ambiguous"
+        assert classify("purple") == "ambiguous"
+
+    def test_conversational_hmm(self):
+        assert classify("hmm") == "conversational"
+
+    def test_conversational_great(self):
+        assert classify("great. let me check") == "conversational"
+
+    def test_conversational_sorry(self):
+        assert classify("sorry, I meant the other one") == "conversational"
+
+    def test_factual_is_there(self):
+        assert classify("is there a way to do this?") == "factual"
+
+    def test_directive_can_we(self):
+        assert classify("can we get started on that?") == "directive"
+
+    def test_directive_open(self):
+        assert classify("open the config file") == "directive"
 
 
 class TestCorrectionInjection:
