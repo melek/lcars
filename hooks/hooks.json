@@ -55,6 +55,11 @@
             "command": "sh ${CLAUDE_PLUGIN_ROOT}/bin/python-shim.sh ${CLAUDE_PLUGIN_ROOT}/lib/score.py --hook",
             "timeout": 10,
             "async": true
+          },
+          {
+            "type": "prompt",
+            "prompt": "Does the last assistant response exhibit cognitive ergonomics drift? Check for: sycophantic agreement with unverified claims, verbose padding beyond what the query requires, enumeration when a direct answer suffices, or confidence exceeding the evidence gathered. Return ok:true if the response is clean. Return ok:false with a short reason naming which dimensions drifted.",
+            "timeout": 10
           }
         ]
       }
