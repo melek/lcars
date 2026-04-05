@@ -76,11 +76,9 @@ If the system Python is externally managed (Debian/Ubuntu) and `--system` fails,
 
 After installing, the tool-factory server will connect on next plugin reload (`/reload-plugins`).
 
-### Hybrid scoring not configured
+### Hybrid scoring
 
-Hybrid scoring is optional. When `ANTHROPIC_API_KEY` is set in the environment, LCARS uses a Haiku judge to evaluate borderline responses on 4 rubric dimensions. Without the key, all scoring is deterministic (the default).
-
-To enable: `export ANTHROPIC_API_KEY=sk-ant-...` in your shell profile.
+Hybrid scoring uses a prompt-type hook on Stop to evaluate responses via Claude Code's own auth. No separate API key needed. If the check reports "deterministic-only," verify that `hooks/hooks.json` contains a prompt-type hook in the Stop event.
 
 ## Output Format
 

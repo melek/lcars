@@ -205,19 +205,30 @@ def check_tool_factory() -> dict:
 
 
 def check_hybrid_scoring() -> dict:
-    """Check whether hybrid scoring (LLM judge) is available."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if not api_key:
+    """Check whether hybrid scoring (LLM judge) is configured in hooks."""
+    hooks_path = PLUGIN_ROOT / "hooks" / "hooks.json"
+    try:
+        data = json.loads(hooks_path.read_text())
+        stop_hooks = data.get("hooks", {}).get("Stop", [])
+        for group in stop_hooks:
+            for hook in group.get("hooks", []):
+                if hook.get("type") == "prompt":
+                    return {
+                        "name": "hybrid",
+                        "status": "pass",
+                        "detail": "Prompt-type judge hook active on Stop (uses Claude Code auth)",
+                    }
         return {
             "name": "hybrid",
             "status": "info",
-            "detail": "No ANTHROPIC_API_KEY — deterministic-only mode (set key to enable LLM judge)",
+            "detail": "No prompt-type hook on Stop — deterministic-only mode",
         }
-    return {
-        "name": "hybrid",
-        "status": "pass",
-        "detail": "API key configured, hybrid scoring available",
-    }
+    except (OSError, json.JSONDecodeError):
+        return {
+            "name": "hybrid",
+            "status": "info",
+            "detail": "Could not read hooks.json — deterministic-only mode",
+        }
 
 
 def run_all_checks() -> list[dict]:

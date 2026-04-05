@@ -57,7 +57,7 @@ Seven hooks form the runtime pipeline. Deterministic scoring is the floor; an op
 | File | Purpose |
 |------|---------|
 | `data/anchor.txt` | ~50-token behavioral anchor injected at session start |
-| `data/corrections.json` | v19; 15 correction strategies (drift x severity x query type) |
+| `data/corrections.json` | v19; 14 correction strategies (drift x severity x query type) |
 | `data/thresholds.json` | v2; global + per-query-type density thresholds |
 | `data/discoverable.json` | Curated allowlist of discoverable CLI tools |
 

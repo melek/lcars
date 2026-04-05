@@ -137,10 +137,10 @@ tool_factory/
 bin/
 └── python-shim.sh    # Cross-platform Python resolver (POSIX)
 
-skills/               # 8 interactive skills (see table above)
+skills/               # 9 interactive skills (see table above)
 agents/
 └── eval.md           # Autonomous evaluation agent (read-only)
-tests/                # 212 tests (pytest)
+tests/                # 241 tests (pytest)
 ```
 
 Runtime data lives at `~/.claude/lcars/` — scores, drift events, correction outcomes, session summaries, patterns, thresholds, and tool registry.
@@ -167,14 +167,14 @@ echo "Great question! I'd be happy to help." | python3 lib/score.py
 python3 -m pytest tests/ -v
 ```
 
-212 tests covering scoring accuracy, query classification, drift detection, correction strategy selection, fitness tracking, pattern consolidation, foundry proposals, tool registry, environment discovery, context assembly, and end-to-end correction loops.
+241 tests covering scoring accuracy, query classification, drift detection, correction strategy selection, fitness tracking, pattern consolidation, foundry proposals, tool registry, environment discovery, context assembly, and end-to-end correction loops.
 
 ## Design
 
 - [DESIGN.md](DESIGN.md) — Recursive ergonomics: applying cognitive load theory to both the user's attention and the model's context window
 - [docs/methodology.md](docs/methodology.md) — Design methodology, 35 research citations, evaluation results across 48 queries
 - [docs/cognitive-ergonomics-primer.html](docs/cognitive-ergonomics-primer.html) — Interactive primer (open in browser)
-- [docs/hybrid-scoring-design.md](docs/hybrid-scoring-design.md) — Design for hybrid regex + LLM-as-judge scoring (planned)
+- [docs/hybrid-scoring-design.md](docs/hybrid-scoring-design.md) — Design for hybrid regex + LLM-as-judge scoring (shipped in v0.7.0 via prompt-type hook)
 - [docs/epistemic-adequacy-design.md](docs/epistemic-adequacy-design.md) — Design for epistemic adequacy detection (planned)
 
 ## Research basis
