@@ -63,26 +63,47 @@ Correction fitness declined from 90% → 76% week-over-week, concentrated in `am
 ### Threshold overrides
 Added query-type-specific density thresholds: `conversational` (0.40), `directive` (0.50). These join existing overrides for `code` (0.50) and `diagnostic` (0.55). Global density threshold (0.60) unchanged.
 
-### Hybrid scoring implementation
+## v0.7.0 — Hybrid Scoring, Learning Pipeline, Classifier Expansion (shipped)
 
-Implement the architecture from `docs/hybrid-scoring-design.md`:
-- Phase 1: Contextual pattern improvements (beyond word boundaries)
-- Phase 2: Escalation logic in `score.py` (regex → clean/drift/escalate)
-- Phase 3: LLM judge integration (Haiku, deep-eval rubric subset)
-- Phase 4: Feedback loop (LLM overrides → pattern refinement)
+### Learning pipeline decoupled from PreCompact (#25)
+The consolidation/summary/foundry pipeline was gated entirely on PreCompact, which rarely fires. Fix: deterministic session summary on SessionStart, amortized consolidation on Stop (5%), PreCompact preserved as backup.
+
+### CLI tool usage attribution (#23)
+Bash command strings parsed to match against discovered CLI tools in the registry. Shell operators (&&, ||, |, ;) split, env var prefixes stripped, path prefixes resolved.
+
+### Storage path centralized (#22)
+Decision: keep `~/.claude/lcars/` (survives marketplace migrations). Four modules with hardcoded paths now route through `compat.lcars_dir()`.
+
+### /lcars:help skill (#24)
+Single skill showing all 8 commands grouped by purpose (Observe / Tune / Strategize). Expert panel assessment concluded NL routing violates deterministic-first; explicit commands are the right design.
+
+### Classifier pattern expansion (#26)
+Boundary analysis of 3,200+ prompts showed 36% of ambiguous prompts were fixable by expanding existing patterns. Conversational: added great, nice, cool, alright, hmm, ah, oh, sorry, so, well, now, then. Factual: added existence questions, need/have patterns. Directive: added open/close/rename/move, expanded "can we" alongside "can you". Ambiguous rate: 34% → 29%.
+
+### Hybrid scoring — prompt-type hook (#28)
+LLM judge added as a prompt-type hook on Stop, using Claude Code's own auth. Evaluates every response for drift on 4 rubric dimensions (sycophantic agreement, verbose details, epistemic adequacy, enumeration padding). Boolean judgment: clean or drifting. Deterministic scoring is the floor; judge enhances. Zero configuration needed.
+
+Utility module (`lib/judge.py`) provides deterministic escalation gate and response validation for analysis.
+
+### Change management protocol
+CLAUDE.md added with lightweight change management: scope classification (Patch/Feature), spec review, design principle checklist, implementation plan, no quick-fix path. Project documents: `docs/plans/`, `docs/incidents/`, `docs/ephemera/`.
+
+## Planned
+
+### /lcars:mechanic skill (#27)
+Prescribed diagnostic and tuning routine — fixed checklist of health, vitals, consolidation, fitness audit, threshold review, foundry, and tool registry steps. Composition of existing skills, not a replacement.
+
+### Correction template phrasing (#29)
+Research: optimize correction templates for model ergonomics. A/B testing terse vs. explicit vs. dimensional phrasing.
 
 ### Epistemic adequacy detection
-
-Implement the approach from `docs/epistemic-adequacy-design.md`:
-- Heuristic detector for strong negatives following limited tool use
-- Data collection: tool-use patterns alongside scores
-- FMEA incident integration as labeled examples
+Heuristic detector for strong negatives following limited tool use, with LLM judge refinement via the hybrid scoring prompt hook.
 
 ### Automatic tool testing harness
-
-Sandboxed test execution for Foundry-proposed tools before they reach the stage → approve gate. Required for safety when tool crystallization is automated rather than user-initiated.
+Sandboxed test execution for Foundry-proposed tools before the stage → approve gate.
 
 ## Deferred
 
 - Multi-user / multi-agent coordination
 - Cross-session tool sharing
+- MCP Sampling integration (blocked on Claude Code implementing sampling/createMessage — issue #1785)

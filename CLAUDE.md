@@ -20,16 +20,17 @@ python3 lib/consolidate.py --consolidate
 
 ## Architecture
 
-Six hooks form the runtime pipeline. All scoring is deterministic (regex, no LLM calls).
+Seven hooks form the runtime pipeline. Deterministic scoring is the floor; an optional prompt-type hook adds LLM judge evaluation via Claude Code's auth.
 
-| Hook | Trigger | Module | Sync | Purpose |
-|------|---------|--------|------|---------|
-| SessionStart | New session | `inject.py` | Yes | Inject anchor + correction + stats |
-| UserPromptSubmit | User sends message | `classify.py` | Yes | Classify query type (9 categories) |
-| PostToolUse | Tool executed | `observe.py` | Async | Log tool use |
-| PreCompact | Context compaction | `consolidate.py` | Async | Session summaries + pattern consolidation |
-| Stop | Response complete | `score.py` | Async | Score response, detect drift, store |
-| SubagentStart | Subagent spawned | `observe.py` | Async | Log subagent start |
+| Hook | Trigger | Module/Type | Sync | Purpose |
+|------|---------|-------------|------|---------|
+| SessionStart | New session | `inject.py` (command) | Yes | Inject anchor + correction + stats; summarize previous session |
+| UserPromptSubmit | User sends message | `classify.py` (command) | Yes | Classify query type (9 categories) |
+| PostToolUse | Tool executed | `observe.py` (command) | Async | Log tool use; attribute CLI tools to registry |
+| PreCompact | Context compaction | `consolidate.py` (command) | Async | Session summaries + pattern consolidation |
+| Stop | Response complete | `score.py` (command) | Async | Score response, detect drift, store |
+| Stop | Response complete | prompt hook | Async | LLM judge: boolean drift evaluation on 4 rubric dimensions |
+| SubagentStart | Subagent spawned | `observe.py` (command) | Async | Log subagent start |
 
 ### Key Modules
 
@@ -47,8 +48,9 @@ Six hooks form the runtime pipeline. All scoring is deterministic (regex, no LLM
 | `lib/registry.py` | Tool registry: discovered + crystallized + user tools |
 | `lib/discover.py` | Environment CLI tool discovery vs curated allowlist |
 | `lib/tool_fitness.py` | Tool promotion/demotion lifecycle |
-| `lib/observe.py` | Silent PostToolUse + SubagentStart logger |
-| `lib/compat.py` | Cross-platform file locking, `lcars_dir()` |
+| `lib/observe.py` | PostToolUse + SubagentStart logger; CLI tool attribution |
+| `lib/judge.py` | Hybrid scoring utilities: escalation gate, response validation |
+| `lib/compat.py` | Cross-platform file locking, `lcars_dir()` (single source for storage path) |
 
 ### Data Files
 
